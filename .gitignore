@@ -1,0 +1,33 @@
+# ── Node.js ──
+node_modules/
+npm-debug.log*
+
+# ── Ortam değişkenleri (şifreler burada!) ──
+.env
+# .env.example eklenebilir (içinde gerçek şifre yok)
+
+# ── Veritabanı (kendi sunucunda oluşsun) ──
+backend/data/helpdesk.db
+backend/data/helpdesk.db-shm
+backend/data/helpdesk.db-wal
+
+# ── Yüklenen dosyalar ──
+backend/uploads/
+
+# ── Frontend build çıktısı (sunucuda build alınır) ──
+backend/public/
+
+# ── macOS ──
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Log dosyaları ──
+*.log
+logs/
