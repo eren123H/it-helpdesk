@@ -5,10 +5,10 @@ import { useAuth } from '../context/AuthContext';
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail]       = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -31,7 +31,8 @@ export default function Login() {
           <span style={styles.logoIcon}>🛡️</span>
           <span style={styles.logoText}>IT HelpDesk</span>
         </div>
-        <p style={styles.subtitle}>Şirket içi destek sistemi</p>
+        <p style={styles.subtitle}>**EREN UÇAR**
+        </p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.field}>

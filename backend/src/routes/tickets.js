@@ -87,6 +87,7 @@ router.get('/:id', (req, res) => {
   const ticket = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(req.params.id);
   if (!ticket) return res.status(404).json({ error: 'Talep bulunamadı' });
 
+  // Normal kullanıcı başkasının talebine giremez
   if (req.user.role === 'user' && ticket.created_by !== req.user.id) {
     return res.status(403).json({ error: 'Bu talebe erişim yetkiniz yok' });
   }
@@ -94,7 +95,8 @@ router.get('/:id', (req, res) => {
   const logs = db.prepare(`
     SELECT l.*, u.name as user_name FROM ticket_logs l
     LEFT JOIN users u ON l.user_id = u.id
-    WHERE l.ticket_id = ? ORDER BY l.created_at ASC
+    WHERE l.ticket_id = ? ${req.user.role === 'user' ? "AND l.detail != 'İç not eklendi'" : ""}
+    ORDER BY l.created_at ASC
   `).all(ticket.id);
 
   const comments = db.prepare(`
