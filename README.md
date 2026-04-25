@@ -3,6 +3,14 @@
 Node.js + SQLite tabanlı, kurulum gerektirmeyen hafif bir IT destek talep yönetim sistemi.  
 Aynı ağdaki herkes tarayıcıdan erişir, sunucu kurulumu için tek bir komut yeterlidir.
 
+### ✨ Öne Çıkan Özellikler
+- **Rol Tabanlı Erişim:** Admin, IT Personeli ve Kullanıcı için özel yetki matrisi.
+- **Canlı Bildirim Sistemi (Bell Notification):** Yeni yorumlarda ve bilet atamalarında sayfayı yenilemeden sağ üstte anlık bildirimler.
+- **SLA & İş Yükü Raporları:** Gelişmiş Admin panelinde personel iş yükü, ortalama çözüm süreleri ve SLA ihlal riskleri.
+- **Personel Memnuniyeti (CSAT):** Çözümlenen biletlere kullanıcıların verdiği 5 yıldızlı değerlendirmelerin genel ve personel bazlı raporlanması.
+- **Akıllı Listeleme:** Önceliğe, "En Yeni" veya "En Eski" biletlere göre anında sıralama; "Aktif", "İşlemde" gibi detaylı filtrelemeler.
+- **Dosya Ekleri & İç Notlar:** Biletlere sorunla ilgili görsel/belge yükleme ve personeller arası "Kullanıcının görmediği" iç notlaşma sistemi.
+
 ---
 
 ## 📋 Gereksinimler
@@ -173,15 +181,19 @@ cp backend/data/helpdesk.db backup_$(date +%Y%m%d).db
 | Kendi taleplerini gör | ✅ | ✅ | ✅ |
 | Tüm talepleri gör | ❌ | ✅ | ✅ |
 | Talep oluştur | ✅ | ✅ | ✅ |
-| Talep detayı | ✅ | ✅ | ✅ |
+| Talep detayı & Dosya Yükleme | ✅ | ✅ | ✅ |
+| Çözümlenen Bileti Puanla (CSAT) | ✅ | ❌ | ❌ |
 | Durum güncelle | ❌ | ✅ | ✅ |
-| Talep ata | ❌ | ✅ | ✅ |
+| Talep ata (Sadece kendine) | ❌ | ✅ | ❌ |
+| Talep ata (Herkese) | ❌ | ❌ | ✅ |
+| Bileti Tamamen Kapat | ❌ | ❌ | ✅ |
 | İç not ekle | ❌ | ✅ | ✅ |
 | Dashboard & istatistik | ❌ | ✅ | ✅ |
 | Kullanıcı oluştur/düzenle | ❌ | ❌ | ✅ |
 | Kullanıcı aktif/pasif | ❌ | ❌ | ✅ |
-| SLA raporları | ❌ | ❌ | ✅ |
+| SLA ve CSAT raporları | ❌ | ❌ | ✅ |
 | Personel iş yükü raporu | ❌ | ❌ | ✅ |
+| Sistem Logları | ❌ | ❌ | ✅ |
 
 ---
 
@@ -191,20 +203,26 @@ cp backend/data/helpdesk.db backup_$(date +%Y%m%d).db
 POST   /api/auth/login
 GET    /api/auth/me
 
-GET    /api/tickets          ?status=&priority=&exclude_status=&q=&page=&limit=
+GET    /api/tickets          ?status=&priority=&exclude_status=&q=&sort=&page=&limit=
 POST   /api/tickets
 GET    /api/tickets/stats
 GET    /api/tickets/:id
 PATCH  /api/tickets/:id/status
 PATCH  /api/tickets/:id/assign
 POST   /api/tickets/:id/comments
+POST   /api/tickets/:id/attachments
+PATCH  /api/tickets/:id/rate    (CSAT Değerlendirmesi)
 
 GET    /api/users            ?role=
 POST   /api/users
 PATCH  /api/users/:id        (name, role, department, active, password)
+GET    /api/users/notifications          (Okunmamış bildirimler)
+PATCH  /api/users/notifications/:id/read (Tekli okundu işareti)
+PATCH  /api/users/notifications/read-all (Tümünü okundu işaretle)
 
 GET    /api/admin/sla
 GET    /api/admin/report
+GET    /api/admin/logs       ?action=&page=&limit=
 
 GET    /api/health
 ```
