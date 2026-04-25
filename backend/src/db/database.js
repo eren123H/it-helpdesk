@@ -44,7 +44,9 @@ function initTables() {
       assigned_to INTEGER REFERENCES users(id),
       created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
-      resolved_at TEXT
+      resolved_at TEXT,
+      rating      INTEGER CHECK(rating >= 1 AND rating <= 5),
+      rating_comment TEXT
     );
 
     CREATE TABLE IF NOT EXISTS ticket_logs (
@@ -96,6 +98,18 @@ function initTables() {
 
     CREATE INDEX IF NOT EXISTS idx_syslogs_created ON system_logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_syslogs_action  ON system_logs(action);
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      ticket_id  INTEGER REFERENCES tickets(id) ON DELETE CASCADE,
+      message    TEXT    NOT NULL,
+      is_read    INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+    CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read);
   `);
 }
 
