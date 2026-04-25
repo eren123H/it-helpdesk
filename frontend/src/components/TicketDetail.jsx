@@ -126,8 +126,14 @@ export default function TicketDetail() {
                   {ticket.status !== 'progress' && ticket.status !== 'resolved' && ticket.status !== 'closed' &&
                     <button style={s.actionBtn('#e3b341')} onClick={() => updateStatus('progress')}>⚡ İşleme Al</button>}
                   {ticket.status !== 'resolved' && ticket.status !== 'closed' &&
-                    <button style={s.actionBtn('#3fb950')} onClick={() => updateStatus('resolved')}>✅ Çözümlendi</button>}
-                  {ticket.status !== 'closed' &&
+                    <button style={s.actionBtn('#3fb950')} onClick={() => {
+                      if (user.role !== 'admin' && !ticket.assigned_to) {
+                        alert('Öncelikle bileti üzerinize almalısınız (Atama yapılmadan bilet çözümlenemez)!');
+                      } else {
+                        updateStatus('resolved');
+                      }
+                    }}>✅ Çözümlendi</button>}
+                  {ticket.status !== 'closed' && user.role === 'admin' &&
                     <button style={s.actionBtn('#8b949e')} onClick={() => updateStatus('closed')}>🔒 Kapat</button>}
                   {ticket.status === 'closed' &&
                     <button style={s.actionBtn('#4f8ef7')} onClick={() => updateStatus('open')}>🔓 Yeniden Aç</button>}
@@ -282,9 +288,11 @@ export default function TicketDetail() {
                 onChange={e => assignTicket(e.target.value ? Number(e.target.value) : null)}
               >
                 <option value="">— Atanmadı —</option>
-                {staff.map(st => (
-                  <option key={st.id} value={st.id}>{st.name} ({st.role})</option>
-                ))}
+                {staff
+                  .filter(st => user.role === 'admin' || st.id === user.id || st.id === ticket.assigned_to)
+                  .map(st => (
+                    <option key={st.id} value={st.id}>{st.name} ({st.role})</option>
+                  ))}
               </select>
             </div>
           )}

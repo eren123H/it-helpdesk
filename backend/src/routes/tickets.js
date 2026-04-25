@@ -123,8 +123,8 @@ router.post('/', (req, res) => {
   }
 
   const db = getDb();
-  const count = db.prepare('SELECT COUNT(*) as c FROM tickets').get().c;
-  const ticket_no = 'HD-' + String(count + 1).padStart(3, '0');
+  const max = db.prepare('SELECT IFNULL(MAX(id), 0) as m FROM tickets').get().m;
+  const ticket_no = 'HD-' + String(max + 1).padStart(3, '0');
 
   const result = db.prepare(`
     INSERT INTO tickets (ticket_no, title, description, category, priority, impact, created_by, updated_at)
@@ -148,9 +148,19 @@ router.patch('/:id/status', requireRole('staff', 'admin'), (req, res) => {
     return res.status(400).json({ error: 'Geçersiz durum' });
   }
 
+  // Sadece adminler bileti kapatabilir
+  if (status === 'closed' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Bileti yalnızca Adminler kapatabilir' });
+  }
+
   const db = getDb();
   const ticket = db.prepare('SELECT * FROM tickets WHERE id = ?').get(req.params.id);
   if (!ticket) return res.status(404).json({ error: 'Talep bulunamadı' });
+
+  // Atama olmadan çözümlendi yapılamaz (Admin hariç)
+  if (status === 'resolved' && req.user.role !== 'admin' && !ticket.assigned_to) {
+    return res.status(403).json({ error: 'Atama yapılmadan bilet çözümlenemez' });
+  }
 
   const labelMap = { open: 'Açıldı', progress: 'İşleme alındı', resolved: 'Çözümlendi', closed: 'Kapatıldı' };
   const resolvedAt = status === 'resolved' ? "datetime('now','localtime')" : 'NULL';
@@ -194,6 +204,12 @@ router.patch('/:id/priority', requireRole('staff', 'admin'), (req, res) => {
 // PATCH /api/tickets/:id/assign  — atama
 router.patch('/:id/assign', requireRole('staff', 'admin'), (req, res) => {
   const { user_id } = req.body;
+
+  // Personel (staff) sadece kendi üzerine atama yapabilir
+  if (req.user.role === 'staff' && user_id && user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Sadece kendi üzerinize atama yapabilirsiniz' });
+  }
+
   const db = getDb();
   const ticket = db.prepare('SELECT * FROM tickets WHERE id = ?').get(req.params.id);
   if (!ticket) return res.status(404).json({ error: 'Talep bulunamadı' });

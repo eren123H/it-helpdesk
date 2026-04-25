@@ -90,14 +90,13 @@ export default function NewTicket() {
         const fd = new FormData();
         fd.append('file', file);
         await api.post(`/tickets/${data.ticket.id}/attachments`, fd).catch(err => {
-          alert("Sadece PDF/Görsel yükleyebilirsiniz veya Dosya yükleme sunucu hatası verdi: " + err.message);
+          console.error("Dosya yükleme hatası:", err.message);
         });
       }
 
       showToast(`✅ Talep oluşturuldu! #${data.ticket.ticket_no}`);
       setTimeout(() => navigate(`/tickets/${data.ticket.id}`), 1200);
     } catch (e) {
-      alert("Sunucu Hatası: " + (e.response?.data?.error || e.message));
       showToast('Hata: ' + (e.response?.data?.error || 'Talep oluşturulamadı'));
     } finally {
       setSubmitting(false);

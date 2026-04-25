@@ -51,7 +51,6 @@ export default function AdminPanel() {
     { key:'users',  label:'👥 Kullanıcılar' },
     { key:'sla',    label:'📋 SLA' },
     { key:'report', label:'📊 Raporlar' },
-    { key:'logs',   label:'📄 Sistem Logları' },
   ];
 
   return (

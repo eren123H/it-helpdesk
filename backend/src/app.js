@@ -38,11 +38,12 @@ app.get('/api/health', (_req, res) => {
 
 // ── Frontend static dosyaları (build sonrası) ──
 const publicDir = path.join(__dirname, '../public');
-const uploadsDir = path.join(__dirname, '../../uploads');
+const uploadsDir = path.join(__dirname, '../uploads');
 const fs = require('fs');
-if (fs.existsSync(uploadsDir)) {
-  app.use('/uploads', express.static(uploadsDir));
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
+app.use('/uploads', express.static(uploadsDir));
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
   // SPA: tüm bilinmeyen route'ları index.html'e yönlendir
