@@ -23,7 +23,7 @@ const TICKET_SELECT = `
 // GET /api/tickets  — liste (filtre destekli)
 router.get('/', (req, res) => {
   const db = getDb();
-  const { status, priority, category, assigned_to, exclude_status, q, page = 1, limit = 20 } = req.query;
+  const { status, priority, category, assigned_to, exclude_status, q, sort = 'priority', page = 1, limit = 20 } = req.query;
 
   let where = [];
   let params = [];
@@ -52,9 +52,12 @@ router.get('/', (req, res) => {
   const offset = (Number(page) - 1) * Number(limit);
 
   const total = db.prepare(`SELECT COUNT(*) as c FROM tickets t ${whereClause}`).get(...params).c;
-  const rows  = db.prepare(`${TICKET_SELECT} ${whereClause} ORDER BY
-    CASE t.priority WHEN 'Kritik' THEN 1 WHEN 'Yüksek' THEN 2 WHEN 'Orta' THEN 3 ELSE 4 END,
-    t.created_at DESC LIMIT ? OFFSET ?`).all(...params, Number(limit), offset);
+  
+  let orderBy = "CASE t.priority WHEN 'Kritik' THEN 1 WHEN 'Yüksek' THEN 2 WHEN 'Orta' THEN 3 ELSE 4 END, t.created_at DESC";
+  if (sort === 'time_desc') orderBy = "t.created_at DESC";
+  else if (sort === 'time_asc') orderBy = "t.created_at ASC";
+
+  const rows  = db.prepare(`${TICKET_SELECT} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).all(...params, Number(limit), offset);
 
   res.json({ total, page: Number(page), limit: Number(limit), tickets: rows });
 });
@@ -115,6 +118,39 @@ router.get('/:id', (req, res) => {
   res.json({ ticket, logs, comments, attachments });
 });
 
+// POST /api/tickets/merge  — bilet birleştirme
+router.post('/merge', requireRole('admin'), (req, res) => {
+  const { target_id, ticket_ids } = req.body;
+  if (!target_id || !Array.isArray(ticket_ids) || ticket_ids.length === 0) {
+    return res.status(400).json({ error: 'Geçersiz parametreler' });
+  }
+
+  const db = getDb();
+  const target = db.prepare('SELECT id, ticket_no FROM tickets WHERE id = ?').get(target_id);
+  if (!target) return res.status(404).json({ error: 'Ana bilet bulunamadı' });
+
+  let mergedCount = 0;
+  for (const tid of ticket_ids) {
+    if (tid === target_id) continue;
+    
+    const t = db.prepare('SELECT id, ticket_no FROM tickets WHERE id = ?').get(tid);
+    if (t) {
+      db.prepare(`UPDATE tickets SET status = 'closed', merged_into = ?, updated_at = datetime('now','localtime') WHERE id = ?`).run(target_id, tid);
+      
+      // Kapattığımız bilete not
+      db.prepare(`INSERT INTO comments (ticket_id, user_id, body, internal) VALUES (?, ?, ?, 1)`).run(tid, req.user.id, `Bu bilet #${target.ticket_no} ile birleştirilerek kapatıldı.`);
+      db.prepare(`INSERT INTO ticket_logs (ticket_id, user_id, action, detail) VALUES (?, ?, 'merged', ?)`).run(tid, req.user.id, `#${target.ticket_no} içerisine birleştirildi`);
+      
+      // Ana bilete not
+      db.prepare(`INSERT INTO comments (ticket_id, user_id, body, internal) VALUES (?, ?, ?, 1)`).run(target_id, req.user.id, `#${t.ticket_no} numaralı bilet bu bilete birleştirildi.`);
+      
+      mergedCount++;
+    }
+  }
+
+  res.json({ success: true, mergedCount });
+});
+
 // POST /api/tickets  — yeni talep
 router.post('/', (req, res) => {
   const { title, description, category, priority, impact } = req.body;
@@ -137,6 +173,16 @@ router.post('/', (req, res) => {
   `).run(result.lastInsertRowid, req.user.id);
 
   const ticket = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(result.lastInsertRowid);
+  
+  // Yeni talepte tüm adminlere bildirim gönder
+  const admins = db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
+  const stmt = db.prepare("INSERT INTO notifications (user_id, ticket_id, message) VALUES (?, ?, ?)");
+  for (const a of admins) {
+    if (a.id !== req.user.id) {
+      stmt.run(a.id, ticket.id, `Yeni talep açıldı: #${ticket_no}`);
+    }
+  }
+
   res.status(201).json({ ticket });
 });
 
@@ -234,7 +280,7 @@ router.post('/:id/comments', (req, res) => {
 
   const isInternal = Boolean(internal) && req.user.role !== 'user';
   const db = getDb();
-  const ticket = db.prepare('SELECT id, created_by FROM tickets WHERE id = ?').get(req.params.id);
+  const ticket = db.prepare('SELECT id, ticket_no, created_by, assigned_to FROM tickets WHERE id = ?').get(req.params.id);
   if (!ticket) return res.status(404).json({ error: 'Talep bulunamadı' });
 
   if (req.user.role === 'user' && ticket.created_by !== req.user.id) {
@@ -249,6 +295,33 @@ router.post('/:id/comments', (req, res) => {
     .run(ticket.id, req.user.id, isInternal ? 'İç not eklendi' : 'Yorum eklendi');
 
   db.prepare("UPDATE tickets SET updated_at = datetime('now','localtime') WHERE id = ?").run(ticket.id);
+
+  // Bildirim gönderimi (İç not değilse ve kendine yorum atmıyorsa)
+  if (!isInternal) {
+    let notifyUserId = null;
+    let message = '';
+    
+    if (req.user.role === 'user') {
+      if (ticket.assigned_to) {
+        notifyUserId = ticket.assigned_to;
+        message = `#${ticket.ticket_no} numaralı talebe kullanıcı yanıt ekledi.`;
+      } else {
+        // Atanmamışsa adminlere bildir
+        const admins = db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
+        const stmt = db.prepare("INSERT INTO notifications (user_id, ticket_id, message) VALUES (?, ?, ?)");
+        for (const a of admins) {
+          stmt.run(a.id, ticket.id, `#${ticket.ticket_no} numaralı atanmamış talebe yanıt geldi.`);
+        }
+      }
+    } else if (ticket.created_by !== req.user.id) {
+      notifyUserId = ticket.created_by;
+      message = `#${ticket.ticket_no} numaralı talebinize yeni bir yanıt geldi.`;
+    }
+
+    if (notifyUserId) {
+      db.prepare(`INSERT INTO notifications (user_id, ticket_id, message) VALUES (?, ?, ?)`).run(notifyUserId, ticket.id, message);
+    }
+  }
 
   const comment = db.prepare(`
     SELECT c.*, u.name as user_name, u.role as user_role FROM comments c
@@ -288,6 +361,35 @@ router.post('/:id/attachments', upload.single('file'), (req, res) => {
   `).get(result.lastInsertRowid);
 
   res.status(201).json({ attachment });
+});
+
+// PATCH /api/tickets/:id/rate — kullanıcı değerlendirmesi (yıldız)
+router.patch('/:id/rate', requireRole('user'), (req, res) => {
+  const { rating } = req.body;
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Geçersiz puanlama' });
+  }
+
+  const db = getDb();
+  const ticket = db.prepare('SELECT * FROM tickets WHERE id = ?').get(req.params.id);
+  
+  if (!ticket) return res.status(404).json({ error: 'Talep bulunamadı' });
+  if (ticket.created_by !== req.user.id) return res.status(403).json({ error: 'Sadece kendi talebinizi değerlendirebilirsiniz' });
+  if (ticket.status !== 'resolved' && ticket.status !== 'closed') {
+    return res.status(400).json({ error: 'Sadece çözümlenen talepler değerlendirilebilir' });
+  }
+  if (ticket.rating) {
+    return res.status(400).json({ error: 'Bu talep zaten değerlendirilmiş' });
+  }
+
+  db.prepare(`UPDATE tickets SET rating = ?, updated_at = datetime('now','localtime') WHERE id = ?`)
+    .run(rating, ticket.id);
+
+  db.prepare(`INSERT INTO ticket_logs (ticket_id, user_id, action, detail) VALUES (?, ?, 'rate', ?)`)
+    .run(ticket.id, req.user.id, `Kullanıcı değerlendirmesi: ${rating} Yıldız`);
+
+  const updated = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(ticket.id);
+  res.json({ ticket: updated });
 });
 
 // Multer hata yönetimi

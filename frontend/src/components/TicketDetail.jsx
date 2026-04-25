@@ -19,6 +19,8 @@ export default function TicketDetail() {
   const [internal, setInternal] = useState(false);
   const [posting, setPosting]   = useState(false);
   const [toast, setToast]       = useState('');
+  const [rating, setRating]     = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
 
   function showToast(msg) {
     setToast(msg);
@@ -64,6 +66,17 @@ export default function TicketDetail() {
       showToast('✅ Atama güncellendi');
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Atama başarısız'));
+    }
+  }
+
+  async function submitRating() {
+    if (!rating) return;
+    try {
+      await api.patch(`/tickets/${id}/rate`, { rating, comment: ratingComment });
+      await load();
+      showToast('⭐ Değerlendirme kaydedildi');
+    } catch (e) {
+      showToast('Hata: ' + (e.response?.data?.error || 'Değerlendirme yapılamadı'));
     }
   }
 
@@ -147,6 +160,37 @@ export default function TicketDetail() {
             <h3 style={s.cardTitle}>📄 Açıklama</h3>
             <p style={s.desc}>{ticket.description}</p>
           </div>
+
+          {/* Rating Section */}
+          {(ticket.status === 'resolved' || ticket.status === 'closed') && (
+            (user.role === 'admin' && ticket.rating) || 
+            (user.role === 'user' && ticket.created_by === user.id)
+          ) && (
+            <div style={{ ...s.card, background: 'linear-gradient(145deg, #161b22, #1c2128)' }}>
+              <h3 style={s.cardTitle}>⭐ Hizmet Değerlendirmesi</h3>
+              {ticket.rating ? (
+                <div>
+                  <div style={{ display:'flex', gap:4, fontSize:'1.5rem', marginBottom:8 }}>
+                    {[1,2,3,4,5].map(i => <span key={i} style={{ color: i <= ticket.rating ? '#e3b341' : '#30363d' }}>★</span>)}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p style={{ fontSize:'.85rem', color:'#8b949e', marginBottom:12 }}>Bu talep çözümlendi. Aldığınız destekten ne kadar memnun kaldınız?</p>
+                  <div style={{ display:'flex', gap:8, fontSize:'1.8rem', marginBottom:16, cursor:'pointer' }}>
+                    {[1,2,3,4,5].map(i => (
+                      <span key={i} onClick={() => setRating(i)} style={{ color: i <= rating ? '#e3b341' : '#30363d', transition:'color 0.2s' }}>★</span>
+                    ))}
+                  </div>
+                  <button
+                    style={{ ...s.primaryBtn, marginTop: 4, opacity: rating ? 1 : 0.5 }}
+                    onClick={submitRating} disabled={!rating}>
+                    Değerlendirmeyi Gönder
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Comments */}
           <div style={s.card}>

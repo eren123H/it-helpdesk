@@ -48,7 +48,8 @@ router.get('/report', (req, res) => {
         COUNT(t.id) as total,
         SUM(CASE WHEN t.status = 'open' THEN 1 ELSE 0 END) as open,
         SUM(CASE WHEN t.status = 'progress' THEN 1 ELSE 0 END) as progress,
-        SUM(CASE WHEN t.status = 'resolved' THEN 1 ELSE 0 END) as resolved
+        SUM(CASE WHEN t.status = 'resolved' THEN 1 ELSE 0 END) as resolved,
+        ROUND(AVG(t.rating), 1) as avg_rating
       FROM users u
       LEFT JOIN tickets t ON t.assigned_to = u.id
       WHERE u.role IN ('staff','admin') AND u.active = 1
@@ -61,6 +62,15 @@ router.get('/report', (req, res) => {
       FROM tickets WHERE status IN ('resolved','closed') AND resolved_at IS NOT NULL
       GROUP BY priority
     `).all(),
+
+    csat: db.prepare(`
+      SELECT 
+        ROUND(AVG(rating), 1) as average_rating,
+        COUNT(rating) as total_ratings,
+        SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_ratings
+      FROM tickets
+      WHERE rating IS NOT NULL
+    `).get(),
 
     tickets_last_30: db.prepare(`
       SELECT date(created_at) as day, COUNT(*) as c

@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import api from './api/client';
 import Login       from './components/Login';
 import Dashboard   from './components/Dashboard';
 import TicketList  from './components/TicketList';
@@ -18,6 +20,39 @@ function ProtectedRoute({ children, roles }) {
 function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifs, setShowNotifs] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifs = () => {
+      api.get('/users/notifications')
+         .then(res => setNotifications(res.data.notifications))
+         .catch(console.error);
+    };
+
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  async function markAsRead(id, ticketId) {
+    try {
+      await api.patch(`/users/notifications/${id}/read`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      setShowNotifs(false);
+      navigate(`/tickets/${ticketId}`);
+    } catch(e) { console.error(e); }
+  }
+
+  async function markAllAsRead() {
+    try {
+      await api.patch('/users/notifications/read-all');
+      setNotifications([]);
+      setShowNotifs(false);
+    } catch(e) { console.error(e); }
+  }
 
   const navItems = [
     { to:'/dashboard', label:'📊 Dashboard', roles:['staff','admin'] },
@@ -48,7 +83,44 @@ function Layout({ children }) {
         </nav>
         <div style={l.right}>
           <div style={l.liveDot} title="Canlı" />
-          <span style={{ fontSize:'.75rem', color:'#8b949e' }}>Canlı</span>
+          <span style={{ fontSize:'.75rem', color:'#8b949e', marginRight:10 }}>Canlı</span>
+          
+          <div style={{ position:'relative', marginRight: 16 }}>
+            <button 
+              onClick={() => setShowNotifs(!showNotifs)}
+              style={{ background:'transparent', border:'none', fontSize:'1.4rem', cursor:'pointer', position:'relative', padding:0 }}
+            >
+              🔔
+              {notifications.length > 0 && (
+                <div style={{ position:'absolute', top:-2, right:-4, background:'#f85149', color:'white', fontSize:'.6rem', fontWeight:800, padding:'2px 5px', borderRadius:10, border:'2px solid #161b22' }}>
+                  {notifications.length}
+                </div>
+              )}
+            </button>
+            {showNotifs && (
+              <div style={{ position:'absolute', top: 35, right: -10, width: 320, background:'#1c2128', border:'1px solid #30363d', borderRadius: 8, boxShadow:'0 8px 24px rgba(0,0,0,0.5)', zIndex:999 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid #30363d', background:'rgba(255,255,255,0.02)', borderRadius:'8px 8px 0 0' }}>
+                  <span style={{ fontWeight:600, fontSize:'.9rem' }}>Bildirimler</span>
+                  {notifications.length > 0 && (
+                    <button onClick={markAllAsRead} style={{ background:'transparent', border:'none', color:'#4f8ef7', cursor:'pointer', fontSize:'.75rem' }}>Tümünü Okundu İşaretle</button>
+                  )}
+                </div>
+                <div style={{ maxHeight: 300, overflowY:'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: 20, textAlign:'center', color:'#8b949e', fontSize:'.85rem' }}>Yeni bildiriminiz yok 🎉</div>
+                  ) : (
+                    notifications.map(n => (
+                      <div key={n.id} onClick={() => markAsRead(n.id, n.ticket_id)} style={{ padding:'12px 16px', borderBottom:'1px solid #30363d', cursor:'pointer', transition:'background 0.2s', ':hover':{ background:'#2d333b'} }}>
+                        <div style={{ fontSize:'.8rem', color:'#c9d1d9', lineHeight: 1.4 }}>{n.message}</div>
+                        <div style={{ fontSize:'.65rem', color:'#8b949e', marginTop:4 }}>{n.created_at.slice(0,16).replace('T', ' ')}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div style={{ ...l.avatar, cursor:'default' }} title={`${user?.name} (${user?.role})`}>
             {user?.name?.split(' ').map(w => w[0]).join('').slice(0,2)}
           </div>

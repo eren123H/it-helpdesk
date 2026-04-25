@@ -97,4 +97,29 @@ router.patch('/:id', requireRole('admin'), (req, res) => {
   res.json({ user: updated });
 });
 
+// GET /api/users/notifications  — okunmamış bildirimler
+router.get('/notifications', (req, res) => {
+  const db = getDb();
+  const notifications = db.prepare(`
+    SELECT * FROM notifications 
+    WHERE user_id = ? AND is_read = 0 
+    ORDER BY created_at DESC LIMIT 50
+  `).all(req.user.id);
+  res.json({ notifications });
+});
+
+// PATCH /api/users/notifications/read-all  — tümünü okundu işaretle
+router.patch('/notifications/read-all', (req, res) => {
+  const db = getDb();
+  db.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?').run(req.user.id);
+  res.json({ success: true });
+});
+
+// PATCH /api/users/notifications/:id/read  — tekili okundu işaretle
+router.patch('/notifications/:id/read', (req, res) => {
+  const db = getDb();
+  db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
 module.exports = router;

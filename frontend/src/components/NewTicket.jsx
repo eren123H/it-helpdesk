@@ -58,7 +58,7 @@ export default function NewTicket() {
     if (!form.title.trim()) e.title = 'Başlık gerekli';
     if (!form.category) e.category = 'Kategori seçin';
     if (!form.description.trim()) e.description = 'Açıklama gerekli';
-    if (form.description.trim().length < 20) e.description = 'En az 20 karakter girin';
+    if (form.description.trim().length < 5) e.description = 'En az 5 karakter girin';
     setErrors(e);
     return Object.keys(e).length === 0;
   }

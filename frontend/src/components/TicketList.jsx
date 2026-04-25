@@ -10,6 +10,7 @@ export default function TicketList() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState(user.role === 'user' ? 'all' : 'active');
+  const [sort, setSort] = useState('priority');
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
@@ -21,13 +22,14 @@ export default function TicketList() {
       else if (filter === 'active') params.exclude_status = 'resolved,closed';
       else if (filter !== 'all') params.status = filter;
       if (search) params.q = search;
+      params.sort = sort;
       const { data } = await api.get('/tickets', { params });
       setTickets(data.tickets);
       setTotal(data.total);
     } finally {
       setLoading(false);
     }
-  }, [filter, search]);
+  }, [filter, search, sort]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -41,6 +43,11 @@ export default function TicketList() {
     { key: 'critical', label: '🔥 Kritik' },
   ].filter(f => !f.adminOnly || user.role !== 'user');
 
+  const getHoursOpen = (createdAt) => {
+    const diff = new Date() - new Date(createdAt);
+    return Math.floor(diff / (1000 * 60 * 60));
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -49,18 +56,29 @@ export default function TicketList() {
       </div>
 
       <div style={s.filters}>
-        <input
-          style={s.searchBar} type="text"
-          placeholder="🔍  Talep ara..." value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        {filters.map(f => (
-          <button key={f.key}
-            style={{ ...s.filterBtn, ...(filter === f.key ? s.filterActive : {}) }}
-            onClick={() => setFilter(f.key)}>
-            {f.label}
-          </button>
-        ))}
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', flex:1 }}>
+          <input
+            style={s.searchBar} type="text"
+            placeholder="🔍  Talep ara..." value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {filters.map(f => (
+            <button key={f.key}
+              style={{ ...s.filterBtn, ...(filter === f.key ? s.filterActive : {}) }}
+              onClick={() => setFilter(f.key)}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <select 
+          style={{ ...s.filterBtn, background:'#1c2128', color:'#c9d1d9', cursor:'pointer' }}
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+        >
+          <option value="priority">🔥 Önceliğe Göre</option>
+          <option value="time_desc">🕒 En Yeniler</option>
+          <option value="time_asc">⏳ En Eskiler</option>
+        </select>
       </div>
 
       {loading ? (
@@ -73,7 +91,14 @@ export default function TicketList() {
             <div key={t.id} style={s.card} onClick={() => navigate(`/tickets/${t.id}`)}>
               <PriorityDot priority={t.priority} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: '.93rem', marginBottom: 2 }}>{t.title}</div>
+                <div style={{ fontWeight: 600, fontSize: '.93rem', marginBottom: 2 }}>
+                  {t.title}
+                  {(t.status === 'open' || t.status === 'progress') && (
+                    <span style={{ fontSize: '.7rem', color: '#e3b341', marginLeft: 8, fontWeight: 500, background:'rgba(227,179,65,0.1)', padding:'2px 6px', borderRadius:10 }}>
+                      ⏳ {getHoursOpen(t.created_at)} saattir açık
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: '.78rem', color: '#8b949e' }}>
                   {t.creator_name} · {t.creator_department} · {t.category}
                   <span style={{ marginLeft: 8 }}>{t.created_at?.slice(0, 16).replace('T', ' ')}</span>

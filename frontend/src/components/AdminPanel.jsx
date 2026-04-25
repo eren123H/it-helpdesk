@@ -139,22 +139,40 @@ export default function AdminPanel() {
           {Object.entries(sla).map(([priority, data]) => {
             const pct = data.total ? Math.round((data.withinSla / data.total) * 100) : 100;
             const color = pct >= 90 ? '#3fb950' : pct >= 70 ? '#e3b341' : '#f85149';
+            const icons = { 'Kritik':'🔥', 'Yüksek':'⚡', 'Orta':'🔹', 'Düşük':'⚪' };
             return (
-              <div key={priority} style={s.card}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
-                  <div>
-                    <div style={{ fontWeight:700, fontSize:'1rem' }}>{priority}</div>
-                    <div style={{ fontSize:'.75rem', color:'#8b949e', marginTop:2 }}>Hedef: {data.targetHours} saat içinde</div>
+              <div key={priority} style={{ ...s.card, display:'flex', alignItems:'center', gap: 20, padding: '20px' }}>
+                <div style={{ width: 50, height: 50, borderRadius: '50%', background: `${color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.6rem', flexShrink:0 }}>
+                  {icons[priority]}
+                </div>
+                
+                <div style={{ flex: 1 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:'1.05rem', color:'#c9d1d9' }}>{priority} Öncelikli Talepler</div>
+                      <div style={{ fontSize:'.75rem', color:'#8b949e', marginTop: 2 }}>Çözüm Hedefi: {data.targetHours} Saat</div>
+                    </div>
+                    <div style={{ fontSize:'1.5rem', fontWeight:800, color }}>%{pct}</div>
                   </div>
-                  <div style={{ fontSize:'1.8rem', fontWeight:800, color }}>{pct}%</div>
-                </div>
-                <div style={s.slaBarBg}>
-                  <div style={{ ...s.slaBarFill, width: pct + '%', background: color }} />
-                </div>
-                <div style={s.slaStats}>
-                  <span>Toplam: <strong>{data.total}</strong></span>
-                  <span style={{ color:'#3fb950' }}>Zamanında: <strong>{data.withinSla}</strong></span>
-                  <span style={{ color:'#f85149' }}>İhlal riski: <strong>{data.breached}</strong></span>
+                  
+                  <div style={{ height: 6, width: '100%', background:'#30363d', borderRadius: 3, overflow:'hidden', marginBottom: 12 }}>
+                    <div style={{ width: pct + '%', background: color, height:'100%' }} />
+                  </div>
+                  
+                  <div style={{ display:'flex', gap: 24, fontSize:'.8rem' }}>
+                    <div style={{ display:'flex', flexDirection:'column' }}>
+                      <span style={{ color:'#8b949e', fontSize:'.7rem' }}>Toplam Talep</span>
+                      <strong style={{ color:'#c9d1d9' }}>{data.total}</strong>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column' }}>
+                      <span style={{ color:'#8b949e', fontSize:'.7rem' }}>SLA İçinde</span>
+                      <strong style={{ color:'#3fb950' }}>{data.withinSla}</strong>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column' }}>
+                      <span style={{ color:'#8b949e', fontSize:'.7rem' }}>İhlal Riski</span>
+                      <strong style={{ color:'#f85149' }}>{data.breached}</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -169,20 +187,37 @@ export default function AdminPanel() {
           <div style={s.card}>
             <h3 style={s.cardTitle}>👤 Personel İş Yükü</h3>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {report.staff_workload.map(st => (
-                <div key={st.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 0', borderBottom:'1px solid #30363d' }}>
-                  <div style={{ ...s.avatar, background:'#4f8ef7', flexShrink:0 }}>
-                    {st.name.split(' ').map(w=>w[0]).join('').slice(0,2)}
-                  </div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:'.88rem', fontWeight:600 }}>{st.name}</div>
-                    <div style={{ fontSize:'.73rem', color:'#8b949e', marginTop:2 }}>
-                      Toplam: {st.total} · Açık: {st.open} · İşlemde: {st.progress} · Çözüldü: {st.resolved}
+              {report.staff_workload.map(st => {
+                const totalWork = st.total || 1;
+                const progressPct = ((st.progress + st.open) / totalWork) * 100;
+                const resolvedPct = (st.resolved / totalWork) * 100;
+                return (
+                  <div key={st.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:'1px solid #30363d' }}>
+                    <div style={{ ...s.avatar, background:'linear-gradient(135deg, #4f8ef7, #7c5af5)', flexShrink:0, boxShadow:'0 4px 10px rgba(79,142,247,0.3)' }}>
+                      {st.name.split(' ').map(w=>w[0]).join('').slice(0,2)}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <div style={{ fontSize:'.9rem', fontWeight:600 }}>{st.name}</div>
+                        <div style={{ fontSize:'1.1rem', fontWeight:800, color:'#c9d1d9' }}>{st.total}</div>
+                      </div>
+                      
+                      {/* Mini Progress Bar */}
+                      <div style={{ height: 4, width: '100%', background:'#30363d', borderRadius: 2, display:'flex', overflow:'hidden', marginTop: 6, marginBottom: 4 }}>
+                        <div style={{ width: `${progressPct}%`, background:'#e3b341' }} />
+                        <div style={{ width: `${resolvedPct}%`, background:'#3fb950' }} />
+                      </div>
+
+                      <div style={{ fontSize:'.7rem', color:'#8b949e', display:'flex', justifyContent:'space-between' }}>
+                        <span>Açık/İşlemde: <strong style={{color:'#e3b341'}}>{st.open + st.progress}</strong> · Çözüldü: <strong style={{color:'#3fb950'}}>{st.resolved}</strong></span>
+                        <span style={{ color: st.avg_rating ? '#e3b341' : '#8b949e', fontWeight:600 }}>
+                          {st.avg_rating ? `${st.avg_rating} ⭐` : 'Puan Yok'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ fontSize:'1.2rem', fontWeight:700, color:'#4f8ef7' }}>{st.total}</div>
-                </div>
-              ))}
+                );
+              })}
               {!report.staff_workload.length && <p style={{ color:'#8b949e', fontSize:'.85rem' }}>Veri yok</p>}
             </div>
           </div>
@@ -190,14 +225,37 @@ export default function AdminPanel() {
           {/* Avg resolution */}
           <div style={s.card}>
             <h3 style={s.cardTitle}>⏱️ Ortalama Çözüm Süresi</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               {report.avg_resolution_hours.map(r => (
-                <div key={r.priority} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid #30363d' }}>
-                  <span style={{ fontSize:'.88rem' }}>{r.priority}</span>
-                  <span style={{ fontWeight:700, color:'#4f8ef7' }}>{r.avg_hours} saat</span>
+                <div key={r.priority} style={{ padding:'16px', background:'rgba(255,255,255,0.03)', borderRadius:8, textAlign:'center', border:'1px solid #30363d' }}>
+                  <div style={{ fontSize:'.8rem', color:'#8b949e', marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>{r.priority}</div>
+                  <div style={{ fontSize:'1.6rem', fontWeight:800, color: r.avg_hours < 24 ? '#3fb950' : r.avg_hours < 48 ? '#e3b341' : '#f85149' }}>
+                    {r.avg_hours} <span style={{fontSize:'.9rem', fontWeight:400}}>saat</span>
+                  </div>
                 </div>
               ))}
-              {!report.avg_resolution_hours.length && <p style={{ color:'#8b949e', fontSize:'.85rem' }}>Henüz çözümlenen talep yok</p>}
+              {!report.avg_resolution_hours.length && <p style={{ color:'#8b949e', fontSize:'.85rem', gridColumn:'1/-1' }}>Henüz çözümlenen talep yok</p>}
+            </div>
+          </div>
+
+          {/* CSAT Rating */}
+          <div style={{ ...s.card, gridColumn:'1/-1', display:'flex', alignItems:'center', gap:30, flexWrap:'wrap' }}>
+            <div style={{ flexShrink:0, textAlign:'center', minWidth: 200 }}>
+              <h3 style={s.cardTitle}>⭐ Personel Memnuniyeti</h3>
+              <div style={{ fontSize:'3.5rem', fontWeight:800, color:'#e3b341', lineHeight:1 }}>
+                {report.csat.average_rating || '0.0'}
+              </div>
+              <div style={{ fontSize:'.8rem', color:'#8b949e', marginTop:6 }}>5 Üzerinden Ortalama Puan</div>
+            </div>
+            <div style={{ flex:1, borderLeft:'1px solid #30363d', paddingLeft:30, display:'flex', gap:40 }}>
+              <div style={{ display:'flex', flexDirection:'column' }}>
+                <span style={{ fontSize:'.75rem', color:'#8b949e' }}>Toplam Değerlendirme</span>
+                <span style={{ fontSize:'1.6rem', fontWeight:600 }}>{report.csat.total_ratings || 0}</span>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column' }}>
+                <span style={{ fontSize:'.75rem', color:'#8b949e' }}>Olumlu (4 ve 5 Yıldız)</span>
+                <span style={{ fontSize:'1.6rem', fontWeight:600, color:'#3fb950' }}>{report.csat.positive_ratings || 0}</span>
+              </div>
             </div>
           </div>
 
@@ -205,16 +263,15 @@ export default function AdminPanel() {
           <div style={{ ...s.card, gridColumn:'1/-1' }}>
             <h3 style={s.cardTitle}>📅 Son 30 Gün Talep Trendi</h3>
             {report.tickets_last_30.length ? (
-              <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:80, marginTop:8 }}>
+              <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:130, marginTop:24, overflowX:'auto', paddingBottom:8 }}>
                 {(() => {
                   const max = Math.max(...report.tickets_last_30.map(d => d.c), 1);
                   return report.tickets_last_30.map(d => (
-                    <div key={d.day} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2, flex:1 }}>
-                      <div style={{ width:'100%', borderRadius:'2px 2px 0 0', background:'linear-gradient(180deg,#4f8ef7,#7c5af5)',
-                        height: Math.max((d.c / max) * 70, 3) }} title={`${d.day}: ${d.c} talep`} />
-                      {report.tickets_last_30.length <= 15 && (
-                        <span style={{ fontSize:'.55rem', color:'#8b949e', transform:'rotate(-45deg)', whiteSpace:'nowrap' }}>{d.day?.slice(5)}</span>
-                      )}
+                    <div key={d.day} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, minWidth: 45 }}>
+                      <span style={{ fontSize:'.85rem', fontWeight:700, color:'#c9d1d9' }}>{d.c}</span>
+                      <div style={{ width:'32px', borderRadius:'3px 3px 0 0', background:'#4f8ef7',
+                        height: Math.max((d.c / max) * 80, 4) }} title={`${d.day}: ${d.c} talep`} />
+                      <span style={{ fontSize:'.75rem', color:'#8b949e' }}>{d.day?.slice(5)}</span>
                     </div>
                   ));
                 })()}
