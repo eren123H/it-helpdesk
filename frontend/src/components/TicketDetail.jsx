@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Badge, PriorityDot } from './Dashboard';
+import { CheckCircle2, Star, MessageSquare, Save, Zap, Lock, Unlock, FileText, Paperclip, Image, File, History, Info, User, AlertTriangle, AlertCircle } from 'lucide-react';
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -52,7 +53,7 @@ export default function TicketDetail() {
     try {
       await api.patch(`/tickets/${id}/status`, { status });
       await load();
-      const l = { progress: '⚡ İşleme alındı', resolved: '✅ Çözümlendi', closed: '🔒 Kapatıldı', open: '🔓 Yeniden açıldı' };
+      const l = { progress: 'İşleme alındı', resolved: 'Çözümlendi', closed: 'Kapatıldı', open: 'Yeniden açıldı' };
       showToast(l[status] || 'Durum güncellendi');
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Güncelleme başarısız'));
@@ -63,7 +64,7 @@ export default function TicketDetail() {
     try {
       await api.patch(`/tickets/${id}/assign`, { user_id: userId || null });
       await load();
-      showToast('✅ Atama güncellendi');
+      showToast('Atama güncellendi');
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Atama başarısız'));
     }
@@ -74,7 +75,7 @@ export default function TicketDetail() {
     try {
       await api.patch(`/tickets/${id}/rate`, { rating, comment: ratingComment });
       await load();
-      showToast('⭐ Değerlendirme kaydedildi');
+      showToast('Değerlendirme kaydedildi');
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Değerlendirme yapılamadı'));
     }
@@ -84,7 +85,7 @@ export default function TicketDetail() {
     try {
       await api.patch(`/tickets/${id}/priority`, { priority });
       await load();
-      showToast(`⚠️ Öncelik güncellendi: ${priority}`);
+      showToast(`Öncelik güncellendi: ${priority}`);
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Öncelik güncellenemedi'));
     }
@@ -98,7 +99,7 @@ export default function TicketDetail() {
       setComment('');
       setInternal(false);
       await load();
-      showToast('💬 Yorum eklendi');
+      showToast('Yorum eklendi');
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Yorum eklenemedi'));
     } finally {
@@ -137,19 +138,19 @@ export default function TicketDetail() {
               {isStaffOrAdmin && (
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                   {ticket.status !== 'progress' && ticket.status !== 'resolved' && ticket.status !== 'closed' &&
-                    <button style={s.actionBtn('#e3b341')} onClick={() => updateStatus('progress')}>⚡ İşleme Al</button>}
+                    <button style={{...s.actionBtn('#e3b341'), display:'flex', alignItems:'center', gap:6}} onClick={() => updateStatus('progress')}><Zap size={16}/> İşleme Al</button>}
                   {ticket.status !== 'resolved' && ticket.status !== 'closed' &&
-                    <button style={s.actionBtn('#3fb950')} onClick={() => {
+                    <button style={{...s.actionBtn('#3fb950'), display:'flex', alignItems:'center', gap:6}} onClick={() => {
                       if (user.role !== 'admin' && !ticket.assigned_to) {
                         alert('Öncelikle bileti üzerinize almalısınız (Atama yapılmadan bilet çözümlenemez)!');
                       } else {
                         updateStatus('resolved');
                       }
-                    }}>✅ Çözümlendi</button>}
+                    }}>Çözümlendi</button>}
                   {ticket.status !== 'closed' && user.role === 'admin' &&
-                    <button style={s.actionBtn('#8b949e')} onClick={() => updateStatus('closed')}>🔒 Kapat</button>}
+                    <button style={{...s.actionBtn('#8b949e'), display:'flex', alignItems:'center', gap:6}} onClick={() => updateStatus('closed')}><Lock size={16}/> Kapat</button>}
                   {ticket.status === 'closed' &&
-                    <button style={s.actionBtn('#4f8ef7')} onClick={() => updateStatus('open')}>🔓 Yeniden Aç</button>}
+                    <button style={{...s.actionBtn('#4f8ef7'), display:'flex', alignItems:'center', gap:6}} onClick={() => updateStatus('open')}><Unlock size={16}/> Yeniden Aç</button>}
                 </div>
               )}
             </div>
@@ -157,7 +158,7 @@ export default function TicketDetail() {
 
           {/* Description */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>📄 Açıklama</h3>
+            <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><FileText size={16}/> Açıklama</h3>
             <p style={s.desc}>{ticket.description}</p>
           </div>
 
@@ -167,7 +168,7 @@ export default function TicketDetail() {
             (user.role === 'user' && ticket.created_by === user.id)
           ) && (
             <div style={{ ...s.card, background: 'linear-gradient(145deg, #161b22, #1c2128)' }}>
-              <h3 style={s.cardTitle}>⭐ Hizmet Değerlendirmesi</h3>
+              <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><Star size={16}/> Hizmet Değerlendirmesi</h3>
               {ticket.rating ? (
                 <div>
                   <div style={{ display:'flex', gap:4, fontSize:'1.5rem', marginBottom:8 }}>
@@ -194,14 +195,14 @@ export default function TicketDetail() {
 
           {/* Comments */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>💬 Yorumlar ({comments.length})</h3>
+            <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><MessageSquare size={16}/> Yorumlar ({comments.length})</h3>
             <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:16 }}>
               {comments.map(c => (
                 <div key={c.id} style={{ ...s.comment, ...(c.internal ? s.commentInternal : {}) }}>
                   <div style={s.commentHeader}>
                     <span style={{ fontWeight:600, fontSize:'.85rem' }}>{c.user_name}</span>
                     <span style={s.commentRole}>{c.user_role === 'staff' ? 'IT Personeli' : c.user_role === 'admin' ? 'Admin' : 'Kullanıcı'}</span>
-                    {c.internal === 1 && <span style={s.internalBadge}>🔒 İç Not</span>}
+                    {c.internal === 1 && <span style={{...s.internalBadge, display:'flex', alignItems:'center', gap:4}}><Lock size={12}/> İç Not</span>}
                     <span style={{ color:'#8b949e', fontSize:'.75rem', marginLeft:'auto' }}>{c.created_at?.slice(0,16).replace('T',' ')}</span>
                   </div>
                   <p style={{ margin:0, fontSize:'.88rem', lineHeight:1.6, color: c.internal ? '#c9b84a' : '#c9d1d9' }}>{c.body}</p>
@@ -223,7 +224,7 @@ export default function TicketDetail() {
                 {isStaffOrAdmin && (
                   <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:'.82rem', color:'#8b949e', cursor:'pointer' }}>
                     <input type="checkbox" checked={internal} onChange={e => setInternal(e.target.checked)} />
-                    🔒 İç not (kullanıcı göremez)
+                    <Lock size={14}/> İç not (kullanıcı göremez)
                   </label>
                 )}
                 <button
@@ -238,13 +239,13 @@ export default function TicketDetail() {
           {/* Attachments */}
           {attachments.length > 0 && (
             <div style={s.card}>
-              <h3 style={s.cardTitle}>📎 Ek Dosyalar ({attachments.length})</h3>
+              <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><Paperclip size={16}/> Ek Dosyalar ({attachments.length})</h3>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 {attachments.map(a => {
                   const isImage = a.mimetype.startsWith('image/');
                   const url = `http://${window.location.hostname}:3001/uploads/${a.stored_name}`;
                   const ext = a.original_name.split('.').pop().toUpperCase();
-                  const icon = isImage ? '🖼️' : a.mimetype === 'application/pdf' ? '📄' : '📃';
+                  const icon = isImage ? <Image size={18}/> : a.mimetype === 'application/pdf' ? <FileText size={18}/> : <File size={18}/>;
                   return (
                     <div key={a.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', background:'#1e2531', border:'1px solid #30363d', borderRadius:9 }}>
                       {isImage ? (
@@ -266,7 +267,7 @@ export default function TicketDetail() {
                       <a href={url} download={a.original_name}
                         style={{ fontSize:'.78rem', color:'#4f8ef7', textDecoration:'none', padding:'5px 10px',
                           border:'1px solid #4f8ef7', borderRadius:6, whiteSpace:'nowrap' }}>
-                        ⬇ İndir
+                        İndir
                       </a>
                     </div>
                   );
@@ -277,7 +278,7 @@ export default function TicketDetail() {
 
           {/* Timeline */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>🕐 Aktivite Geçmişi</h3>
+            <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><History size={16}/> Aktivite Geçmişi</h3>
             <div style={s.timeline}>
               {logs.map((l, i) => (
                 <div key={l.id} style={s.timelineItem}>
@@ -299,7 +300,7 @@ export default function TicketDetail() {
         <div style={s.sidebar}>
           {/* Info */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>ℹ️ Bilgiler</h3>
+            <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><Info size={16}/> Bilgiler</h3>
             <div style={s.infoGrid}>
               {[
                 ['Talep Eden', ticket.creator_name],
@@ -322,7 +323,7 @@ export default function TicketDetail() {
           {/* Assign */}
           {isStaffOrAdmin && (
             <div style={s.card}>
-              <h3 style={s.cardTitle}>👤 Atama</h3>
+              <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><User size={16}/> Atama</h3>
               <p style={{ fontSize:'.8rem', color:'#8b949e', marginBottom:10 }}>
                 Şu an: <strong style={{ color:'#e6edf3' }}>{ticket.assignee_name || 'Atanmadı'}</strong>
               </p>
@@ -344,12 +345,12 @@ export default function TicketDetail() {
           {/* Öncelik geçersiz kıl (staff/admin) */}
           {isStaffOrAdmin && (
             <div style={s.card}>
-              <h3 style={s.cardTitle}>⚠️ Öncelik</h3>
+              <h3 style={{...s.cardTitle, display:'flex', alignItems:'center', gap:6}}><AlertTriangle size={16}/> Öncelik</h3>
               <p style={{ fontSize:'.8rem', color:'#8b949e', marginBottom:10 }}>
                 Mevcut: <strong style={{ color:'#e6edf3' }}>{ticket.priority}</strong>
               </p>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {[['Kritik','#f85149','🔥'],['Yüksek','#ff7b72','⚠️'],['Orta','#e3b341','📋'],['Düşük','#3fb950','🟢']].map(([p, col, icon]) => (
+                {[['Kritik','#f85149',<AlertTriangle size={14}/>],['Yüksek','#ff7b72',<AlertCircle size={14}/>],['Orta','#e3b341',<Info size={14}/>],['Düşük','#3fb950',<CheckCircle2 size={14}/>]].map(([p, col, icon]) => (
                   <button
                     key={p}
                     onClick={() => updatePriority(p)}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Shield } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
@@ -28,7 +29,7 @@ export default function Login() {
     <div style={styles.page}>
       <div style={styles.card}>
         <div style={styles.logo}>
-          <span style={styles.logoIcon}>🛡️</span>
+          <Shield size={32} color="#4f8ef7" />
           <span style={styles.logoText}>IT HelpDesk</span>
         </div>
         <p style={styles.subtitle}>**EREN UÇAR**

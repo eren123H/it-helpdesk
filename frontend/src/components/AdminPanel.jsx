@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Users, ClipboardList, BarChart2, Settings, Plus, Star, Clock, CheckCircle2, AlertTriangle, Zap, Minus, UserCircle, CalendarDays } from 'lucide-react';
 import api from '../api/client';
 
 export default function AdminPanel() {
@@ -48,9 +49,9 @@ export default function AdminPanel() {
   if (loading) return <div style={s.center}>Yükleniyor...</div>;
 
   const tabs = [
-    { key:'users',  label:'👥 Kullanıcılar' },
-    { key:'sla',    label:'📋 SLA' },
-    { key:'report', label:'📊 Raporlar' },
+    { key:'users',  label: <span style={{display:'flex', gap:6, alignItems:'center'}}><Users size={16}/> Kullanıcılar</span> },
+    { key:'sla',    label: <span style={{display:'flex', gap:6, alignItems:'center'}}><ClipboardList size={16}/> SLA</span> },
+    { key:'report', label: <span style={{display:'flex', gap:6, alignItems:'center'}}><BarChart2 size={16}/> Raporlar</span> },
   ];
 
   return (
@@ -58,7 +59,9 @@ export default function AdminPanel() {
       {toast && <div style={s.toast}>{toast}</div>}
 
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <h2 style={{ fontSize:'1.1rem', fontWeight:600 }}>⚙️ Yönetim Paneli</h2>
+        <h2 style={{ fontSize:'1.1rem', fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+          <Settings size={20} color="#8b949e" /> Yönetim Paneli
+        </h2>
         <span style={s.adminBadge}>IT Admin</span>
       </div>
 
@@ -77,7 +80,9 @@ export default function AdminPanel() {
       {tab === 'users' && (
         <div>
           <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:12 }}>
-            <button style={s.primaryBtn} onClick={() => setCreate(true)}>➕ Yeni Kullanıcı</button>
+            <button style={{ ...s.primaryBtn, display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setCreate(true)}>
+              <Plus size={16} /> Yeni Kullanıcı
+            </button>
           </div>
           <div style={s.tableWrap}>
             <table style={s.table}>
@@ -128,8 +133,8 @@ export default function AdminPanel() {
               </tbody>
             </table>
           </div>
-          {showCreate && <CreateUserModal onClose={() => setCreate(false)} onCreated={async () => { await loadUsers(); setCreate(false); showToast('✅ Kullanıcı oluşturuldu'); }} />}
-          {editUser && <EditUserModal user={editUser} onClose={() => setEditUser(null)} onUpdated={async () => { await loadUsers(); setEditUser(null); showToast('✅ Kullanıcı güncellendi'); }} />}
+          {showCreate && <CreateUserModal onClose={() => setCreate(false)} onCreated={async () => { await loadUsers(); setCreate(false); showToast('Kullanıcı başarıyla oluşturuldu'); }} />}
+          {editUser && <EditUserModal user={editUser} onClose={() => setEditUser(null)} onUpdated={async () => { await loadUsers(); setEditUser(null); showToast('Kullanıcı başarıyla güncellendi'); }} />}
         </div>
       )}
 
@@ -139,10 +144,10 @@ export default function AdminPanel() {
           {Object.entries(sla).map(([priority, data]) => {
             const pct = data.total ? Math.round((data.withinSla / data.total) * 100) : 100;
             const color = pct >= 90 ? '#3fb950' : pct >= 70 ? '#e3b341' : '#f85149';
-            const icons = { 'Kritik':'🔥', 'Yüksek':'⚡', 'Orta':'🔹', 'Düşük':'⚪' };
+            const icons = { 'Kritik': <AlertTriangle size={24} color={color} />, 'Yüksek': <Zap size={24} color={color} />, 'Orta': <Minus size={24} color={color} />, 'Düşük': <CheckCircle2 size={24} color={color} /> };
             return (
               <div key={priority} style={{ ...s.card, display:'flex', alignItems:'center', gap: 20, padding: '20px' }}>
-                <div style={{ width: 50, height: 50, borderRadius: '50%', background: `${color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.6rem', flexShrink:0 }}>
+                <div style={{ width: 50, height: 50, borderRadius: '50%', background: `${color}15`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                   {icons[priority]}
                 </div>
                 
@@ -185,7 +190,7 @@ export default function AdminPanel() {
         <div style={s.grid2}>
           {/* Staff workload */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>👤 Personel İş Yükü</h3>
+            <h3 style={{ ...s.cardTitle, display: 'flex', alignItems: 'center', gap: 8 }}><UserCircle size={18} color="#8b949e"/> Personel İş Yükü</h3>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {report.staff_workload.map(st => {
                 const totalWork = st.total || 1;
@@ -210,8 +215,8 @@ export default function AdminPanel() {
 
                       <div style={{ fontSize:'.7rem', color:'#8b949e', display:'flex', justifyContent:'space-between' }}>
                         <span>Açık/İşlemde: <strong style={{color:'#e3b341'}}>{st.open + st.progress}</strong> · Çözüldü: <strong style={{color:'#3fb950'}}>{st.resolved}</strong></span>
-                        <span style={{ color: st.avg_rating ? '#e3b341' : '#8b949e', fontWeight:600 }}>
-                          {st.avg_rating ? `${st.avg_rating} ⭐` : 'Puan Yok'}
+                        <span style={{ color: st.avg_rating ? '#e3b341' : '#8b949e', fontWeight:600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          {st.avg_rating ? <>{st.avg_rating} <Star size={12} fill="#e3b341" /></> : 'Değerlendirme Yok'}
                         </span>
                       </div>
                     </div>
@@ -224,7 +229,7 @@ export default function AdminPanel() {
 
           {/* Avg resolution */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>⏱️ Ortalama Çözüm Süresi</h3>
+            <h3 style={{ ...s.cardTitle, display: 'flex', alignItems: 'center', gap: 8 }}><Clock size={18} color="#8b949e"/> Ortalama Çözüm Süresi</h3>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               {report.avg_resolution_hours.map(r => (
                 <div key={r.priority} style={{ padding:'16px', background:'rgba(255,255,255,0.03)', borderRadius:8, textAlign:'center', border:'1px solid #30363d' }}>
@@ -241,7 +246,7 @@ export default function AdminPanel() {
           {/* CSAT Rating */}
           <div style={{ ...s.card, gridColumn:'1/-1', display:'flex', alignItems:'center', gap:30, flexWrap:'wrap' }}>
             <div style={{ flexShrink:0, textAlign:'center', minWidth: 200 }}>
-              <h3 style={s.cardTitle}>⭐ Personel Memnuniyeti</h3>
+              <h3 style={{ ...s.cardTitle, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Star size={18} fill="#e3b341" color="#e3b341" /> Personel Memnuniyeti</h3>
               <div style={{ fontSize:'3.5rem', fontWeight:800, color:'#e3b341', lineHeight:1 }}>
                 {report.csat.average_rating || '0.0'}
               </div>
@@ -261,7 +266,7 @@ export default function AdminPanel() {
 
           {/* Last 30 days chart */}
           <div style={{ ...s.card, gridColumn:'1/-1' }}>
-            <h3 style={s.cardTitle}>📅 Son 30 Gün Talep Trendi</h3>
+            <h3 style={{ ...s.cardTitle, display: 'flex', alignItems: 'center', gap: 8 }}><CalendarDays size={18} color="#8b949e"/> Son 30 Gün Talep Trendi</h3>
             {report.tickets_last_30.length ? (
               <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:130, marginTop:24, overflowX:'auto', paddingBottom:8 }}>
                 {(() => {
@@ -321,7 +326,7 @@ function CreateUserModal({ onClose, onCreated }) {
   return (
     <div style={s.overlay}>
       <div style={s.modal}>
-        <h3 style={{ fontSize:'1rem', fontWeight:700, marginBottom:20 }}>➕ Yeni Kullanıcı</h3>
+        <h3 style={{ fontSize:'1.1rem', fontWeight:600, marginBottom:20, display:'flex', alignItems:'center', gap:8 }}><Plus size={18}/> Yeni Kullanıcı</h3>
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
           {[['Ad Soyad','name','text'],['E-posta','email','email'],['Şifre','password','password']].map(([lbl,key,type]) => (
             <div key={key} style={{ display:'flex', flexDirection:'column', gap:5 }}>
