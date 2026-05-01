@@ -60,6 +60,10 @@ FRONTEND_URL=http://localhost:5173
 ### 3. Veritabanini Olustur
 
 ```bash
+# Once data klasorunu olustur (git tarafindan izlenmedigi icin manuel olusturman gerekir!)
+mkdir data
+
+# Ardindan veritabanini olustur
 npm run seed
 ```
 
