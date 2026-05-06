@@ -49,12 +49,19 @@ npm install
 cp .env.example .env
 ```
 
-`.env` dosyasini ac ve `JWT_SECRET` degerini **mutlaka** degistir:
+`.env` dosyasini ac ve kendi sunucu bilgilerini gir (`JWT_SECRET` degerini **mutlaka** degistir):
 
 ```env
 PORT=3001
 JWT_SECRET=SirketineOzelGucluBirSifreyiYazBuraya!
 FRONTEND_URL=http://localhost:5173
+
+# ── Mail (Gmail SMTP) ──
+MAIL_HOST=smtp.gmail.com
+MAIL_USER=senin-mailin@gmail.com
+MAIL_PASS=uygulama-sifresi
+MAIL_FROM=senin-mailin@gmail.com
+MAIL_NOTIFY=it-departmani@sirket.local
 ```
 
 ### 3. Veritabanini Olustur
@@ -67,15 +74,13 @@ mkdir data
 npm run seed
 ```
 
-Bu komut `backend/data/helpdesk.db` dosyasini olusturur ve ilk kullanicilari ekler:
+Bu komut `backend/data/helpdesk.db` dosyasini olusturur ve sistemi baslatabilmen icin sadece **tek bir Admin hesabi** ekler (sistemi temiz baslatmak icindir, gereksiz demo veri icermez):
 
 | Rol | E-posta | Varsayilan Sifre |
 |-----|---------|-----------------|
 | Admin | admin@helpdesk.local | Admin123! |
-| IT Personeli | ali@helpdesk.local | Staff123! |
-| Kullanici | mehmet@sirket.local | User123! |
 
-> Ilk giristen sonra sifreleri **Yonetim Paneli -> Kullanicilar -> Duzenle** uzerinden degistir.
+> Ilk giristen sonra sifreyi **Yonetim Paneli -> Kullanicilar -> Duzenle** uzerinden **mutlaka** degistir. Diger personel ve kullanicilari bu panelden manuel olarak ekleyebilirsin.
 
 ### 4. Frontend'i Derle
 
@@ -192,10 +197,14 @@ SELECT ticket_no, title, priority, status FROM tickets WHERE status='open';
 .quit
 ```
 
-### Yedek Alma
+### Yedek Alma (Otomatik & Manuel)
 
+Sistem, sunucu baslatildiginda ve ardindan **her 48 saatte bir otomatik olarak** veritabani yedegi alir.
+- Yedekler `backend/data/backups/` klasorunde saklanir.
+- Otomatik olarak **son 14 yedek** (~28 gunluk) tutulur, daha eskiler otomatik silinir.
+
+Manuel yedek almak istersen, sadece tek dosyayi kopyalaman yeterlidir:
 ```bash
-# Sadece tek dosyayi kopyalamak yeterli
 cp backend/data/helpdesk.db backup_$(date +%Y%m%d).db
 ```
 
@@ -255,6 +264,7 @@ GET    /api/users                   Kullanici listesi (staff/admin gorebilir, fi
 GET    /api/users/me                Kendi profili
 POST   /api/users                   Yeni kullanici olustur (sadece admin)
 PATCH  /api/users/:id               Kullanici guncelle: name, role, department, active, password (sadece admin)
+DELETE /api/users/:id               Kullaniciyi (ve bagli log/yorumlari) kalici olarak sil (sadece admin)
 ```
 
 ### Bildirimler
