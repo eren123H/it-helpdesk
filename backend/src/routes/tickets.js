@@ -3,6 +3,7 @@ const path    = require('path');
 const { getDb } = require('../db/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
+const { sendNewTicketMail } = require('../mail/mailer');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -182,6 +183,12 @@ router.post('/', (req, res) => {
       stmt.run(a.id, ticket.id, `Yeni talep açıldı: #${ticket_no}`);
     }
   }
+
+  // Admin ve staff'lara mail bildirimi gönder (asenkron, ana akışı kesmez)
+  const mailRecipients = db.prepare(
+    "SELECT email FROM users WHERE role IN ('admin','staff') AND active = 1"
+  ).all().map(u => u.email);
+  sendNewTicketMail(ticket, mailRecipients);
 
   res.status(201).json({ ticket });
 });
