@@ -184,11 +184,10 @@ router.post('/', (req, res) => {
     }
   }
 
-  // Admin ve staff'lara mail bildirimi gönder (asenkron, ana akışı kesmez)
-  const mailRecipients = db.prepare(
-    "SELECT email FROM users WHERE role IN ('admin','staff') AND active = 1"
-  ).all().map(u => u.email);
-  sendNewTicketMail(ticket, mailRecipients);
+  // Sabit bildirim adresine mail gönder (MAIL_NOTIFY .env'de tanımlı)
+  if (process.env.MAIL_NOTIFY) {
+    sendNewTicketMail(ticket, [process.env.MAIL_NOTIFY]);
+  }
 
   res.status(201).json({ ticket });
 });
