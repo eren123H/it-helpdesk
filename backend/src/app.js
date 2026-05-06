@@ -11,6 +11,12 @@ if (missingEnvs.length > 0) {
   process.exit(1);
 }
 
+// ── Opsiyonel Env Kontrolü (Sadece Uyarı) ──
+if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+  console.warn('\n⚠️  UYARI: MAIL_USER veya MAIL_PASS eksik.');
+  console.warn('   Sistem çalışmaya devam edecek ancak E-posta bildirimleri gönderilemeyecektir.\n');
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
