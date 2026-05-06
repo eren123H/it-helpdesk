@@ -3,7 +3,7 @@ const path    = require('path');
 const { getDb } = require('../db/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
-const { sendNewTicketMail } = require('../mail/mailer');
+const { sendNewTicketMail, sendTicketResolvedMail } = require('../mail/mailer');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -228,6 +228,11 @@ router.patch('/:id/status', requireRole('staff', 'admin'), (req, res) => {
   `).run(ticket.id, req.user.id, `Durum güncellendi: ${labelMap[status]}`);
 
   const updated = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(ticket.id);
+
+  if (status === 'resolved' && process.env.MAIL_NOTIFY) {
+    sendTicketResolvedMail(updated, [process.env.MAIL_NOTIFY]);
+  }
+
   res.json({ ticket: updated });
 });
 
