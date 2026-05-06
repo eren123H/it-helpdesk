@@ -108,22 +108,49 @@ router.delete('/:id', requireRole('admin'), (req, res) => {
     return res.status(400).json({ error: 'Kendi hesabınızı silemezsiniz' });
   }
 
-  // Kullanıcıya ait system_logs kayıtlarını sil
-  db.prepare('DELETE FROM system_logs WHERE actor_id = ?').run(user.id);
+  try {
+    // Tüm silme işlemlerini tek transaction içinde yap
+    db.transaction(() => {
+      const uid = user.id;
 
-  // Kullanıcıyı sil (ticket_logs, comments, attachments, notifications ON DELETE CASCADE ile gider)
-  db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+      // 1. Başka biletlere ait yorumlardaki user_id bağımlılığını kaldır
+      //    (comments.user_id NOT NULL olduğu için yorum satırını siliyoruz)
+      db.prepare('DELETE FROM comments WHERE user_id = ?').run(uid);
 
-  sysLog({
-    actorId:   req.user.id,
-    actorName: req.user.name,
-    action:    'delete_user',
-    target:    `${user.email} (${user.role})`,
-    detail:    `Kullanıcı kalıcı olarak silindi: ${user.name}`,
-    ip:        req.ip,
-  });
+      // 2. Başka biletlere ait dosya eklerindeki user_id bağımlılığını kaldır
+      db.prepare('DELETE FROM attachments WHERE user_id = ?').run(uid);
 
-  res.json({ success: true, message: `${user.name} başarıyla silindi` });
+      // 3. Başka biletlere ait ticket_logs içindeki user_id'yi NULL yap (nullable)
+      db.prepare('UPDATE ticket_logs SET user_id = NULL WHERE user_id = ?').run(uid);
+
+      // 4. Atanan biletleri serbest bırak (assigned_to nullable)
+      db.prepare('UPDATE tickets SET assigned_to = NULL WHERE assigned_to = ?').run(uid);
+
+      // 5. Kullanıcının oluşturduğu biletleri sil
+      //    (ON DELETE CASCADE ile ticket_logs, comments, attachments otomatik temizlenir)
+      db.prepare('DELETE FROM tickets WHERE created_by = ?').run(uid);
+
+      // 6. Sistem loglarını sil
+      db.prepare('DELETE FROM system_logs WHERE actor_id = ?').run(uid);
+
+      // 7. Kullanıcıyı sil (notifications ON DELETE CASCADE ile otomatik silinir)
+      db.prepare('DELETE FROM users WHERE id = ?').run(uid);
+    })();
+
+    sysLog({
+      actorId:   req.user.id,
+      actorName: req.user.name,
+      action:    'delete_user',
+      target:    `${user.email} (${user.role})`,
+      detail:    `Kullanıcı kalıcı olarak silindi: ${user.name}`,
+      ip:        req.ip,
+    });
+
+    res.json({ success: true, message: `${user.name} başarıyla silindi` });
+  } catch (e) {
+    console.error('Kullanıcı silme hatası:', e);
+    res.status(500).json({ error: 'Kullanıcı silinirken bir hata oluştu: ' + e.message });
+  }
 });
 
 // GET /api/users/notifications  — okunmamış bildirimler
