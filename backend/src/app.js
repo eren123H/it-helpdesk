@@ -6,6 +6,7 @@ const authRoutes   = require('./routes/auth');
 const ticketRoutes = require('./routes/tickets');
 const userRoutes   = require('./routes/users');
 const adminRoutes  = require('./routes/admin');
+const { startBackupScheduler } = require('./db/backup');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -70,6 +71,7 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🛡️  IT HelpDesk API çalışıyor → http://0.0.0.0:${PORT}`);
   console.log(`   Health: http://localhost:${PORT}/api/health\n`);
+  startBackupScheduler();
 });
 
 module.exports = app;
