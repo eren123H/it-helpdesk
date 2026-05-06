@@ -126,6 +126,22 @@ export default function AdminPanel() {
                           onClick={() => toggleUser(u)}>
                           {u.active ? 'Pasif Et' : 'Aktif Et'}
                         </button>
+                        <button style={{ ...s.smallBtn, borderColor:'#f85149', color:'#f85149' }}
+                          onClick={async () => {
+                            const first = window.confirm(`"${u.name}" kullanıcısını kalıcı olarak silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`);
+                            if (!first) return;
+                            const second = window.confirm(`SON UYARI: "${u.name}" kullanıcısına ait tüm talepler, yorumlar ve loglar da silinecektir.\n\nDevam etmek istiyor musunuz?`);
+                            if (!second) return;
+                            try {
+                              await api.delete(`/users/${u.id}`);
+                              showToast(`${u.name} başarıyla silindi`);
+                              await loadUsers();
+                            } catch (e) {
+                              showToast('Hata: ' + (e.response?.data?.error || 'Bilinmeyen hata'));
+                            }
+                          }}>
+                          Sil
+                        </button>
                       </div>
                     </td>
                   </tr>

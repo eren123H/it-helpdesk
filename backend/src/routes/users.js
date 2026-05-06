@@ -97,6 +97,35 @@ router.patch('/:id', requireRole('admin'), (req, res) => {
   res.json({ user: updated });
 });
 
+// DELETE /api/users/:id  — kullanıcıyı tüm verileriyle sil (sadece admin)
+router.delete('/:id', requireRole('admin'), (req, res) => {
+  const db = getDb();
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+
+  // Admin kendisini silemez
+  if (user.id === req.user.id) {
+    return res.status(400).json({ error: 'Kendi hesabınızı silemezsiniz' });
+  }
+
+  // Kullanıcıya ait system_logs kayıtlarını sil
+  db.prepare('DELETE FROM system_logs WHERE actor_id = ?').run(user.id);
+
+  // Kullanıcıyı sil (ticket_logs, comments, attachments, notifications ON DELETE CASCADE ile gider)
+  db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+
+  sysLog({
+    actorId:   req.user.id,
+    actorName: req.user.name,
+    action:    'delete_user',
+    target:    `${user.email} (${user.role})`,
+    detail:    `Kullanıcı kalıcı olarak silindi: ${user.name}`,
+    ip:        req.ip,
+  });
+
+  res.json({ success: true, message: `${user.name} başarıyla silindi` });
+});
+
 // GET /api/users/notifications  — okunmamış bildirimler
 router.get('/notifications', (req, res) => {
   const db = getDb();
