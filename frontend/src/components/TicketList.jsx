@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, Filter, ArrowUpDown } from 'lucide-react';
 import api from '../api/client';
@@ -7,17 +7,27 @@ import { useAuth } from '../context/AuthContext';
 
 export default function TicketList() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState(user.role === 'user' ? 'all' : 'active');
-  const [sort, setSort] = useState('priority');
-  const [search, setSearch] = useState('');
-  
+
+  // Rol bazlı varsayılan filtre
+  const defaultFilter = user.role === 'admin' ? 'all' : 'active';
+
+  // sessionStorage'dan oku, yoksa role göre varsayılan kullan
+  const [filter, setFilter] = useState(() => sessionStorage.getItem('ticketFilter') ?? defaultFilter);
+  const [sort,   setSort]   = useState(() => sessionStorage.getItem('ticketSort')   ?? 'time_desc');
+  const [search, setSearch] = useState(() => sessionStorage.getItem('ticketSearch') ?? '');
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isSortOpen,   setIsSortOpen]   = useState(false);
+  const [tickets,      setTickets]      = useState([]);
+  const [total,        setTotal]        = useState(0);
+  const [loading,      setLoading]      = useState(true);
 
   const navigate = useNavigate();
+
+  // Filtre değişince sessionStorage'a kaydet
+  useEffect(() => { sessionStorage.setItem('ticketFilter', filter); }, [filter]);
+  useEffect(() => { sessionStorage.setItem('ticketSort',   sort);   }, [sort]);
+  useEffect(() => { sessionStorage.setItem('ticketSearch', search); }, [search]);
 
   const load = useCallback(async () => {
     setLoading(true);
