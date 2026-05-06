@@ -72,6 +72,7 @@ router.get('/stats', requireRole('staff', 'admin'), (req, res) => {
     progress: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'progress'").get().c,
     resolved: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'resolved'").get().c,
     closed:   db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'closed'").get().c,
+    avg_res_hours: Number((db.prepare("SELECT AVG((julianday(resolved_at) - julianday(created_at)) * 24) as avg_res FROM tickets WHERE resolved_at IS NOT NULL").get().avg_res || 0).toFixed(1)),
     critical: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE priority = 'Kritik' AND status NOT IN ('resolved','closed')").get().c,
     by_category: db.prepare("SELECT category, COUNT(*) as c FROM tickets GROUP BY category ORDER BY c DESC").all(),
     by_priority: db.prepare("SELECT priority, COUNT(*) as c FROM tickets GROUP BY priority").all(),

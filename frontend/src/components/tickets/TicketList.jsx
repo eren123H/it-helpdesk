@@ -168,6 +168,11 @@ export default function TicketList() {
                       Açık: {getHoursOpen(t.created_at)} sa.
                     </span>
                   )}
+                  {(t.status === 'resolved' || t.status === 'closed') && (
+                    <span style={{...s.hoursBadge, color: '#3fb950', background: 'rgba(63,185,80,0.1)'}}>
+                      Çözüm: {t.resolved_at ? Math.floor((new Date(t.resolved_at) - new Date(t.created_at)) / (1000 * 60 * 60)) : Math.floor((new Date(t.updated_at) - new Date(t.created_at)) / (1000 * 60 * 60))} sa.
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '.78rem', color: '#8b949e' }}>
                   {t.creator_name} · {t.creator_department} · {t.category}

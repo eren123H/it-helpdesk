@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, Clock, CheckCircle2, AlertTriangle, Calendar, PieChart, History } from 'lucide-react';
+import { Ticket, Clock, CheckCircle2, AlertTriangle, Calendar, PieChart, History, Zap } from 'lucide-react';
 import api from '../../api/client';
 
 import { Badge, PriorityDot } from '../ui/Badge';
@@ -33,6 +33,7 @@ export default function Dashboard() {
           { icon: <Ticket size={24} color="#4f8ef7" />, value: stats?.total    || 0, label:'Toplam Talep',  sub:'Tüm zamanlar',          color:'#4f8ef7' },
           { icon: <Clock size={24} color="#e3b341" />, value: stats?.open     || 0, label:'Açık Talepler', sub:`${stats?.critical||0} kritik bekliyor`, color:'#e3b341' },
           { icon: <CheckCircle2 size={24} color="#3fb950" />, value: stats?.resolved || 0, label:'Çözümlendi',    sub:'Bu ay',                  color:'#3fb950' },
+          { icon: <Zap size={24} color="#a371f7" />, value: `${stats?.avg_res_hours || 0}s`, label:'Ort. Çözüm', sub:'Genel ortalama', color:'#a371f7' },
           { icon: <AlertTriangle size={24} color="#f85149" />, value: stats?.critical || 0, label:'Kritik',        sub:'SLA takibinde',          color:'#f85149' },
         ].map(({ icon, value, label, sub, color }) => (
           <div key={label} style={c.statCard}>
@@ -139,7 +140,7 @@ export function TicketRow({ ticket: t, onClick }) {
 
 const c = {
   loading: { padding:60, textAlign:'center', color:'#8b949e' },
-  grid4: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 },
+  grid4: { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:16, marginBottom:24 },
   statCard: {
     background:'#161b22', border:'1px solid #30363d', borderRadius:14,
     padding:'18px 20px', transition:'transform .2s',
