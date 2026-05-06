@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, AlertCircle, Info, CheckCircle2, Plus, ArrowLeft, Paperclip, Send, Folder, Laptop, Globe, Mail, ShieldCheck, Printer, HelpCircle } from 'lucide-react';
-import api from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import api from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 
 const CATEGORIES = [
   { id: 'Donanım', label: 'Donanım', icon: <Laptop size={18} /> },

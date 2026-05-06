@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, ClipboardList, BarChart2, Settings, Plus, Star, Clock, CheckCircle2, AlertTriangle, Zap, Minus, UserCircle, CalendarDays } from 'lucide-react';
-import api from '../api/client';
+import api from '../../api/client';
 
 export default function AdminPanel() {
   const [tab, setTab]           = useState('users');

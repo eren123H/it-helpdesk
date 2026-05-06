@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import api from './api/client';
-import Login       from './components/Login';
-import Dashboard   from './components/Dashboard';
-import TicketList  from './components/TicketList';
-import TicketDetail from './components/TicketDetail';
-import NewTicket   from './components/NewTicket';
-import AdminPanel  from './components/AdminPanel';
+import Login       from './components/auth/Login';
+import Dashboard   from './components/dashboard/Dashboard';
+import TicketList  from './components/tickets/TicketList';
+import TicketDetail from './components/tickets/TicketDetail';
+import NewTicket   from './components/tickets/NewTicket';
+import AdminPanel  from './components/admin/AdminPanel';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();

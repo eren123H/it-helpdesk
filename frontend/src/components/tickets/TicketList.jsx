@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, Filter, ArrowUpDown } from 'lucide-react';
-import api from '../api/client';
-import { Badge, PriorityDot } from './Dashboard';
-import { useAuth } from '../context/AuthContext';
+import api from '../../api/client';
+import { Badge, PriorityDot } from '../ui/Badge';
+import { useAuth } from '../../context/AuthContext';
 
 export default function TicketList() {
   const { user } = useAuth();

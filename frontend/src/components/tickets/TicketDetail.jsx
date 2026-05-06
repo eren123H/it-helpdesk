@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../api/client';
-import { useAuth } from '../context/AuthContext';
-import { Badge, PriorityDot } from './Dashboard';
+import api from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+import { Badge, PriorityDot } from '../ui/Badge';
 import { CheckCircle2, Star, MessageSquare, Save, Zap, Lock, Unlock, FileText, Paperclip, Image, File, History, Info, User, AlertTriangle, AlertCircle } from 'lucide-react';
 
 export default function TicketDetail() {
