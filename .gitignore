@@ -10,6 +10,7 @@ npm-debug.log*
 backend/data/helpdesk.db
 backend/data/helpdesk.db-shm
 backend/data/helpdesk.db-wal
+backend/data/backups/
 
 # ── Yüklenen dosyalar ──
 backend/uploads/
