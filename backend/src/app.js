@@ -1,4 +1,16 @@
 require('dotenv').config();
+
+// ── Kritik Env Kontrolü ──
+const requiredEnvs = ['JWT_SECRET'];
+const missingEnvs = requiredEnvs.filter(key => !process.env[key]);
+
+if (missingEnvs.length > 0) {
+  console.error('\n🚨 KRİTİK HATA: Sistem için gerekli ortam değişkenleri bulunamadı!');
+  console.error(`Eksik değişkenler: ${missingEnvs.join(', ')}`);
+  console.error('Lütfen .env dosyanızı kontrol edin. Sunucu başlatılamıyor.\n');
+  process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
