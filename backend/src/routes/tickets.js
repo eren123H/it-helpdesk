@@ -229,8 +229,8 @@ router.patch('/:id/status', requireRole('staff', 'admin'), (req, res) => {
 
   const updated = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(ticket.id);
 
-  if (status === 'resolved' && process.env.MAIL_NOTIFY) {
-    sendTicketResolvedMail(updated, [process.env.MAIL_NOTIFY]);
+  if (status === 'resolved' && updated.creator_email) {
+    sendTicketResolvedMail(updated, [updated.creator_email]);
   }
 
   res.json({ ticket: updated });
