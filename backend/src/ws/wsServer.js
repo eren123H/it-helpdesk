@@ -52,7 +52,7 @@ function initWsServer(httpServer) {
     ws.on('close', () => clearTimeout(authTimeout));
   });
 
-  // Arka planda her 30 saniyede bir tüm bağlantıları kontrol et (Çöp Toplayıcı - Garbage Collector)
+  // Arka planda her 2 saatte bir (7200000 ms) tüm bağlantıları kontrol et (Çöp Toplayıcı - Garbage Collector)
   // Eğer istemci aniden internetten koparsa (elektrik gitmesi vb.) sunucuda sonsuza dek kalmasın diye.
   const interval = setInterval(() => {
     wss.clients.forEach((ws) => {
@@ -60,7 +60,7 @@ function initWsServer(httpServer) {
       ws.isAlive = false;
       ws.ping(); // İstemciye ping at, yaşarsa 'pong' döner ve isAlive true olur
     });
-  }, 30000);
+  }, 7200000);
 
   wss.on('close', () => clearInterval(interval));
 
