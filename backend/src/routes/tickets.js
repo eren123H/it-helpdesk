@@ -4,6 +4,7 @@ const { getDb } = require('../db/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { sendNewTicketMail, sendTicketResolvedMail } = require('../mail/mailer');
+const { sendToUser, sendToUsers } = require('../ws/wsServer');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -179,10 +180,21 @@ router.post('/', (req, res) => {
   // Yeni talepte tüm adminlere bildirim gönder
   const admins = db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
   const stmt = db.prepare("INSERT INTO notifications (user_id, ticket_id, message) VALUES (?, ?, ?)");
+  const notifiedIds = [];
   for (const a of admins) {
     if (a.id !== req.user.id) {
       stmt.run(a.id, ticket.id, `Yeni talep açıldı: #${ticket_no}`);
+      notifiedIds.push(a.id);
     }
+  }
+
+  // WebSocket: anlık bildirim gönder (zaten bağlı olan adminlere)
+  if (notifiedIds.length > 0) {
+    sendToUsers(notifiedIds, {
+      type: 'new_notification',
+      message: `Yeni talep açıldı: #${ticket_no} — ${title}`,
+      ticket_id: ticket.id,
+    });
   }
 
   // Sabit bildirim adresine mail gönder (MAIL_NOTIFY .env'de tanımlı)
@@ -232,6 +244,12 @@ router.patch('/:id/status', requireRole('staff', 'admin'), (req, res) => {
 
   if (status === 'resolved' && updated.creator_email) {
     sendTicketResolvedMail(updated, [updated.creator_email]);
+    // WebSocket: talebi açan kullanıcıya anlık bildirim
+    sendToUser(ticket.created_by, {
+      type: 'new_notification',
+      message: `Talebiniz çözümlendi: #${updated.ticket_no} — ${updated.title}`,
+      ticket_id: ticket.id,
+    });
   }
 
   res.json({ ticket: updated });

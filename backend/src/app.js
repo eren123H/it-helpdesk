@@ -21,6 +21,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+const http = require('http');
+const { initWsServer } = require('./ws/wsServer');
+
 const authRoutes   = require('./routes/auth');
 const ticketRoutes = require('./routes/tickets');
 const userRoutes   = require('./routes/users');
@@ -87,9 +90,14 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Sunucu hatası' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+// ── HTTP + WebSocket sunucusu ──
+const server = http.createServer(app);
+initWsServer(server);
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🛡️  IT HelpDesk API çalışıyor → http://0.0.0.0:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health\n`);
+  console.log(`   Health: http://localhost:${PORT}/api/health`);
+  console.log(`   WebSocket: ws://localhost:${PORT}/ws\n`);
   startBackupScheduler();
 });
 

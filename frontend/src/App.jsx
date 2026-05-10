@@ -26,15 +26,37 @@ function Layout({ children }) {
   useEffect(() => {
     if (!user) return;
 
-    const fetchNotifs = () => {
-      api.get('/users/notifications')
-         .then(res => setNotifications(res.data.notifications))
-         .catch(console.error);
+    // İlk yüklemede mevcut okunmamış bildirimleri getir
+    api.get('/users/notifications')
+       .then(res => setNotifications(res.data.notifications))
+       .catch(console.error);
+
+    // WebSocket bağlantısı — polling yerine gerçek zamanlı bildirim
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      const token = localStorage.getItem('token');
+      ws.send(JSON.stringify({ type: 'auth', token }));
     };
 
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 10000);
-    return () => clearInterval(interval);
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'new_notification') {
+        // Anlık bildirim gelince listeye ekle
+        setNotifications(prev => [{
+          id: Date.now(), // geçici id (okundu işareti için sonra güncellenecek)
+          ticket_id: msg.ticket_id,
+          message: msg.message,
+          created_at: new Date().toLocaleString('tr-TR'),
+          is_read: 0,
+        }, ...prev]);
+      }
+    };
+
+    ws.onerror = () => console.warn('WS bağlantı hatası, bildirimler polling ile devam eder');
+
+    return () => ws.close();
   }, [user]);
 
   async function markAsRead(id, ticketId) {
