@@ -17,15 +17,17 @@ function initWsServer(httpServer) {
 
         if (msg.type === 'auth' && !userId) {
           const decoded = jwt.verify(msg.token, process.env.JWT_SECRET);
-          userId = decoded.id;
+          userId = String(decoded.userId);
 
           if (!clients.has(userId)) clients.set(userId, new Set());
           clients.get(userId).add(ws);
 
           ws.send(JSON.stringify({ type: 'auth_ok' }));
           console.log(`🔌 WS bağlandı: user#${userId} (toplam: ${wss.clients.size})`);
+        } else if (msg.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }));
         }
-      } catch {
+      } catch (e) {
         ws.close(1008, 'Unauthorized');
       }
     });
@@ -52,12 +54,22 @@ function initWsServer(httpServer) {
 
 // Belirli bir kullanıcıya mesaj gönder
 function sendToUser(userId, data) {
-  const sockets = clients.get(userId);
-  if (!sockets || sockets.size === 0) return;
+  const uId = String(userId);
+  console.log(`[WS-DEBUG] Mesaj gönderiliyor -> user#${uId}`, data);
+  const sockets = clients.get(uId);
+  if (!sockets || sockets.size === 0) {
+    console.log(`[WS-DEBUG] user#${uId} için aktif bağlantı bulunamadı. Mevcut bağlı kullanıcılar:`, Array.from(clients.keys()));
+    return;
+  }
   const msg = JSON.stringify(data);
+  let sentCount = 0;
   sockets.forEach(ws => {
-    if (ws.readyState === 1) ws.send(msg); // 1 = OPEN
+    if (ws.readyState === 1) {
+      ws.send(msg);
+      sentCount++;
+    }
   });
+  console.log(`[WS-DEBUG] user#${uId} için ${sentCount} sekmeye mesaj iletildi.`);
 }
 
 // Birden fazla kullanıcıya mesaj gönder

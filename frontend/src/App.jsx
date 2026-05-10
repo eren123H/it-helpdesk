@@ -31,32 +31,61 @@ function Layout({ children }) {
        .then(res => setNotifications(res.data.notifications))
        .catch(console.error);
 
-    // WebSocket bağlantısı — polling yerine gerçek zamanlı bildirim
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
+    let ws;
+    let reconnectTimeout;
+    let pingInterval;
 
-    ws.onopen = () => {
-      const token = localStorage.getItem('token');
-      ws.send(JSON.stringify({ type: 'auth', token }));
+    const connectWS = () => {
+      const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('[WS] Sunucuya bağlanıldı, kimlik doğrulanıyor...');
+        const token = localStorage.getItem('token');
+        ws.send(JSON.stringify({ type: 'auth', token }));
+        
+        // 15 saniyede bir ping atıp bağlantıyı canlı tut
+        pingInterval = setInterval(() => {
+          if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
+        }, 15000);
+      };
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type !== 'pong') console.log('[WS] Mesaj alındı:', msg);
+        
+        if (msg.type === 'auth_ok') {
+          console.log('[WS] Kimlik doğrulama başarılı! Gerçek zamanlı bildirimler aktif.');
+        }
+        if (msg.type === 'new_notification') {
+          setNotifications(prev => [{
+            id: Date.now(), 
+            ticket_id: msg.ticket_id,
+            message: msg.message,
+            created_at: new Date().toLocaleString('tr-TR'),
+            is_read: 0,
+          }, ...prev]);
+        }
+      };
+
+      ws.onerror = (err) => console.error('[WS] Bağlantı hatası:', err);
+      ws.onclose = () => {
+        console.log('[WS] Bağlantı kapandı. 5 saniye sonra yeniden bağlanılıyor...');
+        clearInterval(pingInterval);
+        reconnectTimeout = setTimeout(connectWS, 5000);
+      };
     };
 
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type === 'new_notification') {
-        // Anlık bildirim gelince listeye ekle
-        setNotifications(prev => [{
-          id: Date.now(), // geçici id (okundu işareti için sonra güncellenecek)
-          ticket_id: msg.ticket_id,
-          message: msg.message,
-          created_at: new Date().toLocaleString('tr-TR'),
-          is_read: 0,
-        }, ...prev]);
+    connectWS();
+
+    return () => {
+      clearTimeout(reconnectTimeout);
+      clearInterval(pingInterval);
+      if (ws) {
+        ws.onclose = null; // Component unmount olurken sonsuz döngüyü engelle
+        ws.close();
       }
     };
-
-    ws.onerror = () => console.warn('WS bağlantı hatası, bildirimler polling ile devam eder');
-
-    return () => ws.close();
   }, [user]);
 
   async function markAsRead(id, ticketId) {
