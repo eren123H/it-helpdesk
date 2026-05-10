@@ -9,6 +9,10 @@ function initWsServer(httpServer) {
 
   wss.on('connection', (ws) => {
     let userId = null;
+    ws.isAlive = true;
+
+    // Standart Ping/Pong (sunucu -> istemci) ile ölü bağlantıları temizlemek için
+    ws.on('pong', () => { ws.isAlive = true; });
 
     // İlk mesaj mutlaka auth olmalı: { type: 'auth', token: '...' }
     ws.on('message', (raw) => {
@@ -42,12 +46,23 @@ function initWsServer(httpServer) {
 
     ws.on('error', (err) => console.error('WS hata:', err.message));
 
-    // Bağlantı kurulduğunda 30sn içinde auth gelmezse kapat
     const authTimeout = setTimeout(() => {
       if (!userId) ws.close(1008, 'Auth timeout');
     }, 30000);
     ws.on('close', () => clearTimeout(authTimeout));
   });
+
+  // Arka planda her 30 saniyede bir tüm bağlantıları kontrol et (Çöp Toplayıcı - Garbage Collector)
+  // Eğer istemci aniden internetten koparsa (elektrik gitmesi vb.) sunucuda sonsuza dek kalmasın diye.
+  const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (ws.isAlive === false) return ws.terminate(); // Ölü bağlantıyı zorla kapat
+      ws.isAlive = false;
+      ws.ping(); // İstemciye ping at, yaşarsa 'pong' döner ve isAlive true olur
+    });
+  }, 30000);
+
+  wss.on('close', () => clearInterval(interval));
 
   return wss;
 }
