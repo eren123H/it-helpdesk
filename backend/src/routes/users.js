@@ -62,9 +62,15 @@ router.patch('/:id', requireRole('admin'), (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
   if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
 
-  const { name, role, department, active, password } = req.body;
+  const { name, email, role, department, active, password } = req.body;
   const updates = {};
   if (name)       updates.name       = name;
+  if (email) {
+    const emailLower = email.toLowerCase();
+    const taken = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(emailLower, user.id);
+    if (taken) return res.status(409).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
+    updates.email = emailLower;
+  }
   if (role)       updates.role       = role;
   if (department) updates.department = department;
   if (active !== undefined) updates.active = active ? 1 : 0;
@@ -80,6 +86,7 @@ router.patch('/:id', requireRole('admin'), (req, res) => {
   // Nelerin değiştiğini kaydet
   const changes = [];
   if (name)       changes.push(`Ad: ${name}`);
+  if (email)      changes.push(`E-posta: ${email}`);
   if (role)       changes.push(`Rol: ${role}`);
   if (department) changes.push(`Departman: ${department}`);
   if (password)   changes.push('Şifre değiştirildi');
