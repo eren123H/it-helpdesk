@@ -111,6 +111,12 @@ function initTables() {
     CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
     CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read);
   `);
+
+  try {
+    db.exec(`ALTER TABLE tickets ADD COLUMN sla_breached INTEGER NOT NULL DEFAULT 0;`);
+  } catch (e) {
+    // Sütun zaten varsa hata verir, görmezden gel
+  }
 }
 
 module.exports = { getDb };

@@ -87,6 +87,41 @@ router.get('/stats', requireRole('staff', 'admin'), (req, res) => {
   res.json(stats);
 });
 
+// GET /api/tickets/departments_report — departman raporları
+router.get('/departments_report', requireRole('admin'), (req, res) => {
+  const db = getDb();
+  const report = {
+    by_department: db.prepare(`
+      SELECT u.department, 
+             COUNT(t.id) as total_tickets,
+             SUM(CASE WHEN t.status IN ('open', 'progress') THEN 1 ELSE 0 END) as open_tickets,
+             SUM(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 ELSE 0 END) as resolved_tickets,
+             AVG((julianday(t.resolved_at) - julianday(t.created_at)) * 24) as avg_res_hours
+      FROM users u
+      LEFT JOIN tickets t ON t.created_by = u.id
+      WHERE u.department IS NOT NULL AND u.department != ''
+      GROUP BY u.department
+      ORDER BY total_tickets DESC
+    `).all(),
+    by_category: db.prepare(`
+      SELECT category, COUNT(id) as c 
+      FROM tickets 
+      GROUP BY category 
+      ORDER BY c DESC 
+      LIMIT 10
+    `).all(),
+    avg_resolution: Number((db.prepare("SELECT AVG((julianday(resolved_at) - julianday(created_at)) * 24) as avg_res FROM tickets WHERE resolved_at IS NOT NULL").get().avg_res || 0).toFixed(1))
+  };
+
+  // Saatleri virgülden sonra 1 basamak olacak şekilde formatla
+  report.by_department = report.by_department.map(d => ({
+    ...d,
+    avg_res_hours: d.avg_res_hours ? Number(d.avg_res_hours.toFixed(1)) : 0
+  }));
+
+  res.json(report);
+});
+
 // GET /api/tickets/:id
 router.get('/:id', (req, res) => {
   const db = getDb();
@@ -361,36 +396,45 @@ router.post('/:id/comments', (req, res) => {
   res.status(201).json({ comment });
 });
 
-// POST /api/tickets/:id/attachments  — dosya yükle
-router.post('/:id/attachments', upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Dosya bulunamadı' });
+// POST /api/tickets/:id/attachments  — dosya yükle (çoklu destek)
+router.post('/:id/attachments', upload.array('files', 5), (req, res) => {
+  if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'Dosya bulunamadı' });
 
   const db = getDb();
   const ticket = db.prepare('SELECT id, created_by FROM tickets WHERE id = ?').get(req.params.id);
   if (!ticket) return res.status(404).json({ error: 'Talep bulunamadı' });
 
-  // Kullanıcı sadece kendi ticketarına dosya yükleyebilir
+  // Kullanıcı sadece kendi ticketlarına dosya yükleyebilir
   if (req.user.role === 'user' && ticket.created_by !== req.user.id) {
     return res.status(403).json({ error: 'Yetki yok' });
   }
 
-  const result = db.prepare(`
+  const insertStmt = db.prepare(`
     INSERT INTO attachments (ticket_id, user_id, original_name, stored_name, mimetype, size)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(ticket.id, req.user.id, req.file.originalname, req.file.filename, req.file.mimetype, req.file.size);
+  `);
 
-  db.prepare("UPDATE tickets SET updated_at = datetime('now','localtime') WHERE id = ?")
-    .run(ticket.id);
+  const logStmt = db.prepare(`INSERT INTO ticket_logs (ticket_id, user_id, action, detail) VALUES (?, ?, 'attachment', ?)`);
 
-  db.prepare(`INSERT INTO ticket_logs (ticket_id, user_id, action, detail) VALUES (?, ?, 'attachment', ?)`)
-    .run(ticket.id, req.user.id, `Dosya eklendi: ${req.file.originalname}`);
+  const attachments = [];
+  
+  // Her dosyayı veritabanına işle
+  for (const file of req.files) {
+    const result = insertStmt.run(ticket.id, req.user.id, file.originalname, file.filename, file.mimetype, file.size);
+    logStmt.run(ticket.id, req.user.id, `Dosya eklendi: ${file.originalname}`);
+    
+    attachments.push({
+      id: result.lastInsertRowid,
+      original_name: file.originalname,
+      stored_name: file.filename,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+  }
 
-  const attachment = db.prepare(`
-    SELECT a.*, u.name as uploader_name FROM attachments a
-    JOIN users u ON a.user_id = u.id WHERE a.id = ?
-  `).get(result.lastInsertRowid);
+  db.prepare("UPDATE tickets SET updated_at = datetime('now','localtime') WHERE id = ?").run(ticket.id);
 
-  res.status(201).json({ attachment });
+  res.status(201).json({ attachments });
 });
 
 // PATCH /api/tickets/:id/rate — kullanıcı değerlendirmesi (yıldız)

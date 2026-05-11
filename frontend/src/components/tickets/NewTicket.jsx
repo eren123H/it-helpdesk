@@ -41,7 +41,8 @@ export default function NewTicket() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]); // Çoklu dosya desteği
+  const [dragActive, setDragActive] = useState(false);
 
   const autoPriority = IMPACT_TO_PRIORITY[form.impact] || 'Orta';
   const p = PRIORITY_INFO[autoPriority];
@@ -49,6 +50,24 @@ export default function NewTicket() {
   const set = (fld, val) => {
     setForm(prev => ({ ...prev, [fld]: val }));
     if (errors[fld]) setErrors(prev => ({ ...prev, [fld]: '' }));
+  };
+
+  const handleFiles = (newFiles) => {
+    const arr = Array.from(newFiles);
+    // Maksimum 5 dosya sınırı
+    if (files.length + arr.length > 5) {
+      setToast('En fazla 5 dosya ekleyebilirsiniz');
+      return;
+    }
+    // Her dosya için önizleme URL'si oluştur
+    const updated = arr.map(f => Object.assign(f, { preview: f.type.startsWith('image/') ? URL.createObjectURL(f) : null }));
+    setFiles(prev => [...prev, ...updated]);
+  };
+
+  const removeFile = (index) => {
+    const f = files[index];
+    if (f.preview) URL.revokeObjectURL(f.preview); // Belleği temizle
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const validate = () => {
@@ -65,16 +84,35 @@ export default function NewTicket() {
     setSubmitting(true);
     try {
       const { data } = await api.post('/tickets', { ...form, priority: autoPriority });
-      if (file) {
+      
+      if (files.length > 0) {
         const fd = new FormData();
-        fd.append('file', file);
+        files.forEach(f => fd.append('files', f)); // Backend 'files' bekliyor
         await api.post(`/tickets/${data.ticket.id}/attachments`, fd);
       }
+
       setToast('Talep başarıyla oluşturuldu!');
       setTimeout(() => navigate(`/tickets/${data.ticket.id}`), 1500);
     } catch (err) {
       setToast('Hata: ' + (err.response?.data?.error || 'İşlem başarısız'));
     } finally { setSubmitting(false); }
+  };
+
+  // Drag & Drop Handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
   };
 
   return (
@@ -131,13 +169,52 @@ export default function NewTicket() {
           </div>
 
           <div style={s.field}>
-            <label style={s.label}>Dosya Ekle</label>
-            <div style={s.uploadArea}>
-              <input type="file" id="f" style={{ display: 'none' }} onChange={e => setFile(e.target.files[0])} />
-              <button style={s.uploadBtn} onClick={() => document.getElementById('f').click()}>
-                <Paperclip size={18} /> {file ? file.name : 'Dosya Seç (Görsel, PDF...)'}
-              </button>
-              {file && <button style={s.clearBtn} onClick={() => setFile(null)}>Kaldır</button>}
+            <label style={s.label}>Ek Dosyalar (Maks 5)</label>
+            <div 
+              style={{ 
+                ...s.dropZone, 
+                ...(dragActive ? s.dropZoneActive : {}),
+                ...(files.length > 0 ? { paddingBottom: 10 } : {})
+              }}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input 
+                type="file" 
+                id="f" 
+                multiple 
+                style={{ display: 'none' }} 
+                onChange={e => handleFiles(e.target.files)} 
+              />
+              
+              <div style={s.dropZoneContent}>
+                <div style={s.dropIcon}><Paperclip size={24} /></div>
+                <div>
+                  <div style={{ fontWeight: 600, color: '#e6edf3' }}>Dosyaları buraya sürükleyin</div>
+                  <div style={{ fontSize: '.8rem', color: '#8b949e' }}>veya <button style={s.browseBtn} onClick={() => document.getElementById('f').click()}>bilgisayarınızdan seçin</button></div>
+                </div>
+              </div>
+
+              {files.length > 0 && (
+                <div style={s.previewList}>
+                  {files.map((f, i) => (
+                    <div key={i} style={s.previewItem}>
+                      {f.preview ? (
+                        <img src={f.preview} style={s.previewImg} alt="preview" />
+                      ) : (
+                        <div style={s.fileIcon}><Folder size={20} /></div>
+                      )}
+                      <div style={s.fileInfo}>
+                        <div style={s.fileName}>{f.name}</div>
+                        <div style={s.fileSize}>{(f.size / 1024).toFixed(1)} KB</div>
+                      </div>
+                      <button style={s.removeBtn} onClick={() => removeFile(i)}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -183,29 +260,40 @@ export default function NewTicket() {
 const s = {
   wrapper: { maxWidth: 1000, margin: '0 auto', paddingBottom: 40 },
   header: { display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 },
-  backBtn: { background: '#1e2531', border: '1px solid #30363d', color: '#8b949e', padding: '8px 16px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: '.85rem' },
-  pageTitle: { fontSize: '1.5rem', fontWeight: 700, color: '#e6edf3', margin: 0 },
+  backBtn: { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'rgba(255, 255, 255, 0.8)', padding: '8px 16px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: '.85rem', backdropFilter: 'blur(10px)' },
+  pageTitle: { fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: 0 },
   layout: { display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' },
-  formSection: { background: '#161b22', border: '1px solid #30363d', borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column', gap: 24 },
+  formSection: { background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 20, padding: 32, display: 'flex', flexDirection: 'column', gap: 24, backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' },
   sideSection: { display: 'flex', flexDirection: 'column', gap: 16 },
-  sideCard: { background: '#161b22', border: '1px solid #30363d', borderRadius: 16, padding: 24 },
+  sideCard: { background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 20, padding: 24, backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' },
   field: { display: 'flex', flexDirection: 'column', gap: 10 },
-  label: { fontSize: '.75rem', fontWeight: 700, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '.05em' },
-  input: { background: '#0d1117', border: '1px solid #30363d', borderRadius: 12, padding: '14px 18px', color: '#e6edf3', fontSize: '.95rem', outline: 'none', transition: 'all .2s' },
+  label: { fontSize: '.75rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase', letterSpacing: '.05em' },
+  input: { background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '14px 18px', color: '#ffffff', fontSize: '.95rem', outline: 'none', transition: 'all .2s' },
   textarea: { minHeight: 120, resize: 'vertical' },
-  inputErr: { borderColor: '#f85149' },
-  err: { fontSize: '.75rem', color: '#f85149' },
+  inputErr: { borderColor: '#ff6b6b' },
+  err: { fontSize: '.75rem', color: '#ff6b6b' },
   catGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10 },
-  catItem: { background: '#0d1117', border: '1px solid #30363d', borderRadius: 12, padding: '12px', color: '#8b949e', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all .2s' },
-  catActive: { borderColor: '#4f8ef7', background: 'rgba(79,142,247,0.1)', color: '#4f8ef7' },
+  catItem: { background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '12px', color: 'rgba(255, 255, 255, 0.7)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all .2s' },
+  catActive: { borderColor: '#0dcaf0', background: 'rgba(13, 202, 240, 0.15)', color: '#0dcaf0', boxShadow: '0 0 15px rgba(13,202,240,0.2)' },
   impactList: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 },
-  impactBtn: { background: '#0d1117', border: '1px solid #30363d', borderRadius: 12, padding: '12px 16px', cursor: 'pointer', textAlign: 'left', transition: 'all .2s' },
-  impactActive: { borderColor: '#4f8ef7', background: 'rgba(79,142,247,0.1)' },
-  impactLabel: { fontSize: '.9rem', fontWeight: 700, color: '#e6edf3' },
-  impactSub: { fontSize: '.7rem', color: '#8b949e', marginTop: 2 },
+  impactBtn: { background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '12px 16px', cursor: 'pointer', textAlign: 'left', transition: 'all .2s' },
+  impactActive: { borderColor: '#0dcaf0', background: 'rgba(13, 202, 240, 0.15)' },
+  impactLabel: { fontSize: '.9rem', fontWeight: 700, color: '#ffffff' },
+  impactSub: { fontSize: '.7rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: 2 },
   uploadArea: { display: 'flex', gap: 10 },
-  uploadBtn: { flex: 1, background: '#0d1117', border: '1px dashed #30363d', borderRadius: 12, padding: '12px', color: '#8b949e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: '.9rem' },
-  clearBtn: { background: 'transparent', border: 'none', color: '#f85149', fontSize: '.85rem', cursor: 'pointer' },
-  submitBtn: { background: 'linear-gradient(135deg,#4f8ef7,#7c5af5)', color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 24px rgba(79,142,247,0.2)' },
-  toast: { position: 'fixed', top: 24, right: 24, background: '#161b22', border: '1px solid #30363d', borderRadius: 12, padding: '16px 24px', color: '#e6edf3', fontSize: '.9rem', boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 1000 },
+  dropZone: { background: 'rgba(0, 0, 0, 0.1)', border: '2px dashed rgba(255, 255, 255, 0.2)', borderRadius: 16, padding: 32, textAlign: 'center', transition: 'all .2s', position: 'relative' },
+  dropZoneActive: { borderColor: '#0dcaf0', background: 'rgba(13, 202, 240, 0.05)' },
+  dropZoneContent: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, color: 'rgba(255, 255, 255, 0.6)' },
+  dropIcon: { width: 48, height: 48, background: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0dcaf0' },
+  browseBtn: { background: 'none', border: 'none', color: '#0dcaf0', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline' },
+  previewList: { marginTop: 24, display: 'flex', flexDirection: 'column', gap: 8 },
+  previewItem: { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: 10, display: 'flex', alignItems: 'center', gap: 12, position: 'relative' },
+  previewImg: { width: 40, height: 40, borderRadius: 8, objectFit: 'cover' },
+  fileIcon: { width: 40, height: 40, background: 'rgba(0, 0, 0, 0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255, 255, 255, 0.6)' },
+  fileInfo: { flex: 1, minWidth: 0, textAlign: 'left' },
+  fileName: { fontSize: '.85rem', fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  fileSize: { fontSize: '.7rem', color: 'rgba(255, 255, 255, 0.5)' },
+  removeBtn: { width: 24, height: 24, background: 'rgba(255, 107, 107, 0.15)', border: 'none', borderRadius: '50%', color: '#ff6b6b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', lineHeight: 1 },
+  submitBtn: { background: 'linear-gradient(135deg, #0dcaf0, #048a9f)', color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 24px rgba(13, 202, 240, 0.3)', transition: 'all 0.3s' },
+  toast: { position: 'fixed', top: 24, right: 24, background: 'rgba(20, 30, 50, 0.8)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '16px 24px', color: '#ffffff', fontSize: '.9rem', boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 1000 },
 };

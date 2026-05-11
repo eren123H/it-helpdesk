@@ -29,6 +29,7 @@ const ticketRoutes = require('./routes/tickets');
 const userRoutes   = require('./routes/users');
 const adminRoutes  = require('./routes/admin');
 const { startBackupScheduler } = require('./db/backup');
+const { startSlaChecker } = require('./jobs/slaChecker');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -99,6 +100,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`   Health: http://localhost:${PORT}/api/health`);
   console.log(`   WebSocket: ws://localhost:${PORT}/ws\n`);
   startBackupScheduler();
+  startSlaChecker();
 });
 
 module.exports = app;
