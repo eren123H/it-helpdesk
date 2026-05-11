@@ -21,30 +21,48 @@ export default function TicketList() {
   const [tickets,      setTickets]      = useState([]);
   const [total,        setTotal]        = useState(0);
   const [loading,      setLoading]      = useState(true);
+  const [page,         setPage]         = useState(1);
 
   const navigate = useNavigate();
 
-  // Filtre değişince sessionStorage'a kaydet
-  useEffect(() => { sessionStorage.setItem('ticketFilter', filter); }, [filter]);
-  useEffect(() => { sessionStorage.setItem('ticketSort',   sort);   }, [sort]);
-  useEffect(() => { sessionStorage.setItem('ticketSearch', search); }, [search]);
+  // Filtre değişince sessionStorage'a kaydet ve sayfayı sıfırla
+  useEffect(() => { 
+    sessionStorage.setItem('ticketFilter', filter); 
+    setPage(1);
+  }, [filter]);
+  
+  useEffect(() => { 
+    sessionStorage.setItem('ticketSort', sort); 
+    setPage(1);
+  }, [sort]);
+  
+  useEffect(() => { 
+    sessionStorage.setItem('ticketSearch', search); 
+    setPage(1);
+  }, [search]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { page, limit: 20 };
       if (filter === 'critical') params.priority = 'Kritik';
       else if (filter === 'active') params.exclude_status = 'resolved,closed';
       else if (filter !== 'all') params.status = filter;
       if (search) params.q = search;
       params.sort = sort;
+      
       const { data } = await api.get('/tickets', { params });
-      setTickets(data.tickets);
+      
+      if (page === 1) {
+        setTickets(data.tickets);
+      } else {
+        setTickets(prev => [...prev, ...data.tickets]);
+      }
       setTotal(data.total);
     } finally {
       setLoading(false);
     }
-  }, [filter, search, sort]);
+  }, [filter, search, sort, page]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -67,6 +85,19 @@ export default function TicketList() {
   const getHoursOpen = (createdAt) => {
     const diff = new Date() - new Date(createdAt);
     return Math.floor(diff / (1000 * 60 * 60));
+  };
+
+  const getSlaBadge = (t) => {
+    if (t.status === 'resolved' || t.status === 'closed') return null;
+    const limits = { 'Kritik': 4, 'Yüksek': 8, 'Orta': 24, 'Düşük': 48 };
+    const limitH = limits[t.priority] || 24;
+    const diff = new Date() - new Date(t.created_at);
+    const diffH = diff / (1000 * 60 * 60);
+    const remaining = limitH - diffH;
+    
+    if (remaining < 0) return <span style={{...s.hoursBadge, color:'#f85149', background:'rgba(248,81,73,0.1)'}}>SLA İhlali! ({Math.abs(Math.floor(remaining))} sa gecikti)</span>;
+    if (remaining < limitH * 0.25) return <span style={{...s.hoursBadge, color:'#e3b341', background:'rgba(227,179,65,0.1)'}}>SLA Yaklaşıyor ({Math.floor(remaining)} sa kaldı)</span>;
+    return <span style={{...s.hoursBadge, color:'#8b949e', background:'rgba(139,148,158,0.1)'}}>SLA: {Math.floor(remaining)} sa</span>;
   };
 
   const activeFilterLabel = filters.find(f => f.key === filter)?.label || 'Filtrele';
@@ -164,9 +195,7 @@ export default function TicketList() {
                 <div style={{ fontWeight: 600, fontSize: '.93rem', marginBottom: 2 }}>
                   {t.title}
                   {(t.status === 'open' || t.status === 'progress') && (
-                    <span style={s.hoursBadge}>
-                      Açık: {getHoursOpen(t.created_at)} sa.
-                    </span>
+                    getSlaBadge(t)
                   )}
                   {(t.status === 'resolved' || t.status === 'closed') && (
                     <span style={{...s.hoursBadge, color: '#3fb950', background: 'rgba(63,185,80,0.1)'}}>
@@ -191,6 +220,14 @@ export default function TicketList() {
           ))}
         </div>
       )}
+
+      {tickets.length > 0 && tickets.length < total && (
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <button style={s.ghostBtn} onClick={() => setPage(p => p + 1)}>
+            {loading ? 'Yükleniyor...' : 'Daha Fazla Göster'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -198,13 +235,15 @@ export default function TicketList() {
 const s = {
   controlsContainer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24, flexWrap: 'wrap' },
   searchBar: {
-    minWidth: 240, background: '#161b22', border: '1px solid #30363d',
-    borderRadius: 6, padding: '8px 12px', color: '#e6edf3', fontSize: '.85rem',
+    minWidth: 240, background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+    borderRadius: 8, padding: '8px 12px', color: '#e6edf3', fontSize: '.85rem',
     fontFamily: 'inherit', outline: 'none', transition: 'border-color 0.2s',
   },
   dropdownBtn: {
-    background: '#161b22', border: '1px solid #30363d', color: '#c9d1d9',
-    borderRadius: 6, padding: '8px 14px', fontSize: '.8rem', fontWeight: 500,
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#c9d1d9',
+    backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+    borderRadius: 8, padding: '8px 14px', fontSize: '.8rem', fontWeight: 500,
     cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s',
     display: 'flex', alignItems: 'center', gap: 8, minWidth: 140, justifyContent: 'space-between'
   },
@@ -213,8 +252,9 @@ const s = {
   },
   dropdownMenu: {
     position: 'absolute', top: '100%', right: 0, marginTop: 6, width: 200,
-    background: '#161b22', border: '1px solid #30363d', borderRadius: 8,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.5)', zIndex: 100, overflow: 'hidden',
+    background: 'rgba(9, 19, 33, 0.7)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12,
+    backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100, overflow: 'hidden',
     padding: '4px 0'
   },
   dropdownItem: {
@@ -227,15 +267,20 @@ const s = {
   hoursBadge: { fontSize: '.7rem', color: '#e3b341', marginLeft: 12, fontWeight: 500, background:'rgba(227,179,65,0.1)', padding:'2px 6px', borderRadius: 4 },
   list: { display: 'flex', flexDirection: 'column', gap: 12 },
   card: {
-    background: '#161b22', border: '1px solid #30363d', borderRadius: 8,
+    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12,
     padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16,
-    cursor: 'pointer', transition: 'all .2s',
+    cursor: 'pointer', transition: 'all .3s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
   },
   assignee: { fontSize: '.8rem', fontWeight: 500, whiteSpace: 'nowrap', color: '#4f8ef7' },
   center: { padding: 60, textAlign: 'center', color: '#8b949e', fontSize: '.9rem' },
   primaryBtn: {
-    background: '#4f8ef7', color: '#fff',
-    border: 'none', borderRadius: 6, padding: '8px 16px',
-    fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s',
+    background: 'linear-gradient(135deg, #0dcaf0, #048a9f)', color: '#fff',
+    border: 'none', borderRadius: 8, padding: '10px 18px', boxShadow: '0 4px 12px rgba(13,202,240,0.3)',
+    fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+  },
+  ghostBtn: {
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 8,
+    color: '#e6edf3', padding: '8px 16px', fontSize: '.85rem', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s'
   },
 };
