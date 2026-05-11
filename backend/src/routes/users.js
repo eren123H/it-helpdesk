@@ -10,12 +10,38 @@ router.use(authMiddleware);
 // GET /api/users  — staff listesi (staff + admin görebilir)
 router.get('/', requireRole('staff', 'admin'), (req, res) => {
   const db = getDb();
-  const { role } = req.query;
-  let query = 'SELECT id, name, email, role, department, active, created_at FROM users';
+  const { role, q, page = 1, limit = 20 } = req.query;
+  
+  let where = [];
   const params = [];
-  if (role) { query += ' WHERE role = ?'; params.push(role); }
-  query += ' ORDER BY role, name';
-  res.json({ users: db.prepare(query).all(...params) });
+
+  if (role) {
+    where.push('role = ?');
+    params.push(role);
+  }
+
+  if (q) {
+    where.push('(name LIKE ? OR email LIKE ? OR department LIKE ?)');
+    const searchParam = `%${q}%`;
+    params.push(searchParam, searchParam, searchParam);
+  }
+
+  const whereClause = where.length ? ' WHERE ' + where.join(' AND ') : '';
+  const offset = (Number(page) - 1) * Number(limit);
+
+  const total = db.prepare(`SELECT COUNT(*) as c FROM users ${whereClause}`).get(...params).c;
+  
+  const query = `
+    SELECT id, name, email, role, department, active, created_at 
+    FROM users 
+    ${whereClause} 
+    ORDER BY role, name 
+    LIMIT ? OFFSET ?
+  `;
+  
+  const users = db.prepare(query).all(...params, Number(limit), offset);
+  
+  res.json({ users, total, page: Number(page), limit: Number(limit) });
 });
 
 // GET /api/users/me  — kendi profili
