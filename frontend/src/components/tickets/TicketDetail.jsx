@@ -350,7 +350,7 @@ export default function TicketDetail() {
                 Mevcut: <strong style={{ color:'#e6edf3' }}>{ticket.priority}</strong>
               </p>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {[['Kritik','#f85149',<AlertTriangle size={14}/>],['Yüksek','#ff7b72',<AlertCircle size={14}/>],['Orta','#e3b341',<Info size={14}/>],['Düşük','#3fb950',<CheckCircle2 size={14}/>]].map(([p, col, icon]) => (
+                {[['Kritik','#f85149'],['Yüksek','#ff7b72'],['Orta','#e3b341'],['Düşük','#3fb950']].map(([p, col]) => (
                   <button
                     key={p}
                     onClick={() => updatePriority(p)}
@@ -364,7 +364,7 @@ export default function TicketDetail() {
                     }}
                     disabled={ticket.priority === p}
                   >
-                    <span>{icon}</span> {p}
+                    {p}
                     {ticket.priority === p && <span style={{ marginLeft:'auto', fontSize:'.7rem' }}>✓</span>}
                   </button>
                 ))}
@@ -378,55 +378,74 @@ export default function TicketDetail() {
 }
 
 const s = {
-  wrapper: { maxWidth:1100, margin:'0 auto' },
-  center: { padding:60, textAlign:'center', color:'#8b949e' },
+  wrapper: { maxWidth: 1100, margin: '0 auto' },
+  center: { padding: 60, textAlign: 'center', color: '#8b949e' },
   backBtn: {
-    background:'#1e2531', border:'1px solid #30363d', borderRadius:8,
-    color:'#8b949e', padding:'6px 14px', fontSize:'.82rem', cursor:'pointer', marginBottom:20,
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    color: '#8b949e', padding: '8px 16px', fontSize: '.82rem', cursor: 'pointer', marginBottom: 20,
+    backdropFilter: 'blur(10px)', transition: 'all 0.3s'
   },
-  layout: { display:'grid', gridTemplateColumns:'1fr 300px', gap:20, alignItems:'start' },
-  main: { display:'flex', flexDirection:'column', gap:16 },
-  sidebar: { display:'flex', flexDirection:'column', gap:16 },
-  headerCard: { background:'#161b22', border:'1px solid #30363d', borderRadius:14, padding:'22px 24px' },
-  card: { background:'#161b22', border:'1px solid #30363d', borderRadius:14, padding:'20px 22px' },
-  cardTitle: { fontSize:'.85rem', fontWeight:600, color:'#8b949e', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14 },
-  ticketNo: { fontSize:'.75rem', color:'#8b949e', fontFamily:'monospace', marginBottom:4 },
-  title: { fontSize:'1.2rem', fontWeight:700, margin:0 },
-  cat: { background:'#1e2531', border:'1px solid #30363d', borderRadius:20, padding:'3px 10px', fontSize:'.72rem', color:'#8b949e' },
-  desc: { fontSize:'.9rem', lineHeight:1.7, color:'#c9d1d9', margin:0 },
-  comment: { background:'#1e2531', border:'1px solid #30363d', borderRadius:10, padding:'12px 16px' },
-  commentInternal: { background:'rgba(227,179,65,.07)', border:'1px solid rgba(227,179,65,.3)' },
-  commentHeader: { display:'flex', alignItems:'center', gap:8, marginBottom:8, flexWrap:'wrap' },
-  commentRole: { background:'#1e2531', borderRadius:20, padding:'2px 8px', fontSize:'.68rem', color:'#8b949e' },
-  internalBadge: { background:'rgba(227,179,65,.15)', borderRadius:20, padding:'2px 8px', fontSize:'.68rem', color:'#e3b341' },
-  commentBox: { borderTop:'1px solid #30363d', paddingTop:16 },
+  layout: { display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' },
+  main: { display: 'flex', flexDirection: 'column', gap: 16 },
+  sidebar: { display: 'flex', flexDirection: 'column', gap: 16 },
+  headerCard: { 
+    background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', 
+    borderRadius: 20, padding: '22px 24px', backdropFilter: 'blur(20px) saturate(180%)',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+  },
+  card: { 
+    background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', 
+    borderRadius: 20, padding: '20px 22px', backdropFilter: 'blur(20px) saturate(180%)',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+  },
+  cardTitle: { fontSize: '.85rem', fontWeight: 600, color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 14 },
+  ticketNo: { fontSize: '.75rem', color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
+  title: { fontSize: '1.4rem', fontWeight: 700, margin: 0, color: '#ffffff' },
+  cat: { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 20, padding: '4px 12px', fontSize: '.72rem', color: '#8b949e' },
+  desc: { fontSize: '.95rem', lineHeight: 1.7, color: '#eaf6f7', margin: 0 },
+  comment: { background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '12px 16px' },
+  commentInternal: { background: 'rgba(227, 179, 65, 0.05)', border: '1px solid rgba(227, 179, 65, 0.3)' },
+  commentHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' },
+  commentRole: { background: 'rgba(255, 255, 255, 0.05)', borderRadius: 20, padding: '2px 8px', fontSize: '.68rem', color: 'rgba(255, 255, 255, 0.6)' },
+  internalBadge: { background: 'rgba(227, 179, 65, 0.15)', borderRadius: 20, padding: '2px 8px', fontSize: '.68rem', color: '#e3b341' },
+  commentBox: { borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: 16 },
   textarea: {
-    width:'100%', background:'#1e2531', border:'1px solid #30363d', borderRadius:9,
-    padding:'10px 14px', color:'#e6edf3', fontSize:'.88rem', fontFamily:'inherit',
-    resize:'vertical', outline:'none', boxSizing:'border-box',
+    width: '100%', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12,
+    padding: '12px 16px', color: '#ffffff', fontSize: '.9rem', fontFamily: 'inherit',
+    resize: 'vertical', outline: 'none', boxSizing: 'border-box', transition: 'all 0.3s'
   },
-  timeline: { display:'flex', flexDirection:'column', gap:0 },
-  timelineItem: { display:'flex', gap:12, alignItems:'flex-start', paddingBottom:16, position:'relative' },
-  timelineDot: { width:10, height:10, borderRadius:'50%', background:'#4f8ef7', marginTop:3, flexShrink:0, boxShadow:'0 0 6px rgba(79,142,247,.6)', zIndex:1 },
-  timelineLine: { position:'absolute', left:4, top:13, bottom:0, width:2, background:'#30363d' },
-  infoGrid: { display:'flex', flexDirection:'column', gap:10 },
-  infoRow: { display:'flex', flexDirection:'column', gap:2 },
+  timeline: { display: 'flex', flexDirection: 'column', gap: 0 },
+  timelineItem: { display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 16, position: 'relative' },
+  timelineDot: { width: 10, height: 10, borderRadius: '50%', background: '#0dcaf0', marginTop: 3, flexShrink:0, boxShadow: '0 0 8px #0dcaf0', zIndex: 1 },
+  timelineLine: { position: 'absolute', left: 4, top: 13, bottom: 0, width: 2, background: 'rgba(255, 255, 255, 0.1)' },
+  infoGrid: { display: 'flex', flexDirection: 'column', gap: 12 },
+  infoRow: { display: 'flex', flexDirection: 'column', gap: 2 },
   select: {
-    width:'100%', background:'#1e2531', border:'1px solid #30363d', borderRadius:9,
-    padding:'9px 12px', color:'#e6edf3', fontSize:'.85rem', fontFamily:'inherit', outline:'none',
+    width: '100%', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    padding: '10px 14px', color: '#ffffff', fontSize: '.85rem', fontFamily: 'inherit', outline: 'none',
   },
   primaryBtn: {
-    background:'linear-gradient(135deg,#4f8ef7,#7c5af5)', color:'#fff',
-    border:'none', borderRadius:9, padding:'8px 18px', fontSize:'.85rem', fontWeight:600, cursor:'pointer',
+    background: 'linear-gradient(135deg, #0dcaf0, #048a9f)', color: '#fff',
+    border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer',
+    boxShadow: '0 4px 15px rgba(13, 202, 240, 0.3)', transition: 'all 0.3s'
   },
   actionBtn: (col) => ({
-    background: 'transparent', border: `1px solid ${col}`, borderRadius:8,
-    color: col, padding:'6px 14px', fontSize:'.8rem', fontWeight:600, cursor:'pointer',
+    background: 'transparent', border: `1px solid ${col}`, borderRadius: 10,
+    color: col, padding: '8px 16px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer',
+    transition: 'all 0.3s', backdropFilter: 'blur(10px)'
   }),
   toast: {
-    position:'fixed', bottom:24, right:24, zIndex:999,
-    background:'#1e2531', border:'1px solid #30363d', borderRadius:12,
-    padding:'12px 20px', fontSize:'.85rem', boxShadow:'0 8px 32px rgba(0,0,0,.4)',
-    animation:'fadeIn .3s ease',
+    position: 'fixed', bottom: 24, right: 24, zIndex: 999,
+    background: 'rgba(15, 25, 40, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: 16, padding: '14px 24px', fontSize: '.85rem', color: '#ffffff', boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
   },
 };
+
+// ... inside the component, where priority buttons are rendered ...
+// Find and replace the priority buttons map:
+// From: {[['Kritik','#f85149',<AlertTriangle size={14}/>],['Yüksek','#ff7b72',<AlertCircle size={14}/>],['Orta','#e3b341',<Info size={14}/>],['Düşük','#3fb950',<CheckCircle2 size={14}/>]].map(([p, col, icon]) => (
+// To: {[['Kritik','#f85149'],['Yüksek','#ff7b72'],['Orta','#e3b341'],['Düşük','#3fb950']].map(([p, col]) => (
+// and remove {icon} from the content.
+
+// I will do this in the same multi-replace or separate replace. 
+// Let's use multi_replace for accuracy.

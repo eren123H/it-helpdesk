@@ -235,52 +235,52 @@ export default function TicketList() {
 const s = {
   controlsContainer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24, flexWrap: 'wrap' },
   searchBar: {
-    minWidth: 240, background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
+    minWidth: 240, background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-    borderRadius: 8, padding: '8px 12px', color: '#e6edf3', fontSize: '.85rem',
-    fontFamily: 'inherit', outline: 'none', transition: 'border-color 0.2s',
+    borderRadius: 10, padding: '10px 16px', color: '#ffffff', fontSize: '.85rem',
+    fontFamily: 'inherit', outline: 'none', transition: 'all 0.3s',
   },
   dropdownBtn: {
-    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#c9d1d9',
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-    borderRadius: 8, padding: '8px 14px', fontSize: '.8rem', fontWeight: 500,
-    cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s',
+    borderRadius: 10, padding: '10px 16px', fontSize: '.8rem', fontWeight: 500,
+    cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.3s',
     display: 'flex', alignItems: 'center', gap: 8, minWidth: 140, justifyContent: 'space-between'
   },
   overlay: {
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 90
   },
   dropdownMenu: {
-    position: 'absolute', top: '100%', right: 0, marginTop: 6, width: 200,
-    background: 'rgba(9, 19, 33, 0.7)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12,
-    backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100, overflow: 'hidden',
-    padding: '4px 0'
+    position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 200,
+    background: 'rgba(15, 25, 40, 0.85)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: 16,
+    backdropFilter: 'blur(30px) saturate(200%)', WebkitBackdropFilter: 'blur(30px) saturate(200%)',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.5)', zIndex: 100, overflow: 'hidden',
+    padding: '6px 0'
   },
   dropdownItem: {
-    padding: '10px 16px', fontSize: '.8rem', color: '#8b949e', cursor: 'pointer',
+    padding: '12px 18px', fontSize: '.8rem', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer',
     transition: 'all 0.2s', fontWeight: 500
   },
   dropdownActive: {
-    background: 'rgba(79,142,247,.1)', color: '#4f8ef7', fontWeight: 600
+    background: 'rgba(13, 202, 240, 0.15)', color: '#0dcaf0', fontWeight: 600
   },
-  hoursBadge: { fontSize: '.7rem', color: '#e3b341', marginLeft: 12, fontWeight: 500, background:'rgba(227,179,65,0.1)', padding:'2px 6px', borderRadius: 4 },
+  hoursBadge: { fontSize: '.7rem', color: '#e3b341', marginLeft: 12, fontWeight: 500, background: 'rgba(227, 179, 65, 0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid rgba(227, 179, 65, 0.2)' },
   list: { display: 'flex', flexDirection: 'column', gap: 12 },
   card: {
-    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12,
-    padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16,
-    cursor: 'pointer', transition: 'all .3s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 20,
+    padding: '18px 24px', display: 'flex', alignItems: 'center', gap: 16,
+    cursor: 'pointer', transition: 'all 0.3s', boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
   },
-  assignee: { fontSize: '.8rem', fontWeight: 500, whiteSpace: 'nowrap', color: '#4f8ef7' },
+  assignee: { fontSize: '.8rem', fontWeight: 600, whiteSpace: 'nowrap', color: '#0dcaf0', background: 'rgba(13, 202, 240, 0.1)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(13, 202, 240, 0.2)' },
   center: { padding: 60, textAlign: 'center', color: '#8b949e', fontSize: '.9rem' },
   primaryBtn: {
     background: 'linear-gradient(135deg, #0dcaf0, #048a9f)', color: '#fff',
-    border: 'none', borderRadius: 8, padding: '10px 18px', boxShadow: '0 4px 12px rgba(13,202,240,0.3)',
-    fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+    border: 'none', borderRadius: 10, padding: '10px 20px', boxShadow: '0 8px 20px rgba(13, 202, 240, 0.3)',
+    fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.3s',
   },
   ghostBtn: {
-    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 8,
-    color: '#e6edf3', padding: '8px 16px', fontSize: '.85rem', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s'
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    color: '#ffffff', padding: '10px 20px', fontSize: '.85rem', cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.3s'
   },
 };

@@ -8,7 +8,6 @@ import TicketList from './components/tickets/TicketList';
 import TicketDetail from './components/tickets/TicketDetail';
 import NewTicket from './components/tickets/NewTicket';
 import AdminPanel from './components/admin/AdminPanel';
-import DepartmentReport from './components/dashboard/DepartmentReport';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -109,7 +108,6 @@ function Layout({ children }) {
     { to: '/dashboard', label: 'Dashboard', roles: ['staff', 'admin'] },
     { to: '/tickets', label: 'Talepler', roles: ['user', 'staff', 'admin'] },
     { to: '/tickets/new', label: 'Yeni Talep', roles: ['user', 'staff', 'admin'] },
-    { to: '/reports/departments', label: 'Departman Raporları', roles: ['admin'] },
     { to: '/admin', label: 'Yönetim', roles: ['admin'] },
   ].filter(n => n.roles.includes(user?.role));
 
@@ -213,11 +211,6 @@ function AppRoutes() {
       <Route path="/dashboard" element={
         <ProtectedRoute roles={['staff', 'admin']}>
           <Layout><Dashboard /></Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/reports/departments" element={
-        <ProtectedRoute roles={['admin']}>
-          <Layout><DepartmentReport /></Layout>
         </ProtectedRoute>
       } />
       <Route path="/tickets" element={

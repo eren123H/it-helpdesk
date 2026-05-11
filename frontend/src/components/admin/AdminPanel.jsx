@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardList, BarChart2, Settings, Plus, Star, Clock, CheckCircle2, AlertTriangle, Zap, Minus, UserCircle, CalendarDays } from 'lucide-react';
+import { Users, ClipboardList, BarChart2, Settings, Plus, Star, Clock, CheckCircle2, AlertTriangle, Zap, Minus, UserCircle, CalendarDays, Building2 } from 'lucide-react';
 import api from '../../api/client';
+import DepartmentReport from '../dashboard/DepartmentReport';
 
 export default function AdminPanel() {
   const [tab, setTab] = useState('users');
@@ -47,11 +48,11 @@ export default function AdminPanel() {
   }
 
   if (loading) return <div style={s.center}>Yükleniyor...</div>;
-
   const tabs = [
     { key: 'users', label: <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Users size={16} /> Kullanıcılar</span> },
     { key: 'sla', label: <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}><ClipboardList size={16} /> SLA</span> },
     { key: 'report', label: <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}><BarChart2 size={16} /> Raporlar</span> },
+    { key: 'dept_reports', label: <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Building2 size={16} /> Departman Raporları</span> },
   ];
 
   return (
@@ -98,7 +99,7 @@ export default function AdminPanel() {
                   <tr key={u.id} style={s.tr}>
                     <td style={s.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ ...s.avatar, background: u.role === 'admin' ? '#7c5af5' : u.role === 'staff' ? '#4f8ef7' : '#3fb950' }}>
+                        <div style={{ ...s.avatar, background: u.role === 'admin' ? '#7c5af5' : u.role === 'staff' ? '#0dcaf0' : '#3fb950' }}>
                           {u.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
                         </div>
                         {u.name}
@@ -118,7 +119,7 @@ export default function AdminPanel() {
                     </td>
                     <td style={s.td}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button style={{ ...s.smallBtn, borderColor: '#4f8ef7', color: '#4f8ef7' }}
+                        <button style={{ ...s.smallBtn, borderColor: '#0dcaf0', color: '#0dcaf0' }}
                           onClick={() => setEditUser(u)}>
                           Düzenle
                         </button>
@@ -160,7 +161,7 @@ export default function AdminPanel() {
           {Object.entries(sla).map(([priority, data]) => {
             const pct = data.total ? Math.round((data.withinSla / data.total) * 100) : 100;
             const color = pct >= 90 ? '#3fb950' : pct >= 70 ? '#e3b341' : '#f85149';
-            const icons = { 'Kritik': <AlertTriangle size={24} color={color} />, 'Yüksek': <Zap size={24} color={color} />, 'Orta': <Minus size={24} color={color} />, 'Düşük': <CheckCircle2 size={24} color={color} /> };
+            const icons = { 'Kritik': null, 'Yüksek': null, 'Orta': null, 'Düşük': null };
             return (
               <div key={priority} style={{ ...s.card, display: 'flex', alignItems: 'center', gap: 20, padding: '20px' }}>
                 <div style={{ width: 50, height: 50, borderRadius: '50%', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -214,7 +215,7 @@ export default function AdminPanel() {
                 const resolvedPct = (st.resolved / totalWork) * 100;
                 return (
                   <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid #30363d' }}>
-                    <div style={{ ...s.avatar, background: 'linear-gradient(135deg, #4f8ef7, #7c5af5)', flexShrink: 0, boxShadow: '0 4px 10px rgba(79,142,247,0.3)' }}>
+                    <div style={{ ...s.avatar, background: 'linear-gradient(135deg, #0dcaf0, #048a9f)', flexShrink: 0, boxShadow: '0 4px 10px rgba(13,202,240,0.3)' }}>
                       {st.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -291,7 +292,7 @@ export default function AdminPanel() {
                     <div key={d.day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 45 }}>
                       <span style={{ fontSize: '.85rem', fontWeight: 700, color: '#c9d1d9' }}>{d.c}</span>
                       <div style={{
-                        width: '32px', borderRadius: '3px 3px 0 0', background: '#4f8ef7',
+                        width: '32px', borderRadius: '3px 3px 0 0', background: '#0dcaf0',
                         height: Math.max((d.c / max) * 80, 4)
                       }} title={`${d.day}: ${d.c} talep`} />
                       <span style={{ fontSize: '.75rem', color: '#8b949e' }}>{d.day?.slice(5)}</span>
@@ -303,6 +304,9 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+
+      {/* ── DEPT REPORTS ── */}
+      {tab === 'dept_reports' && <DepartmentReport />}
 
       {/* ── LOGS ── */}
       {tab === 'logs' && (
@@ -318,9 +322,9 @@ export default function AdminPanel() {
 }
 
 function roleStyle(role) {
-  if (role === 'admin') return { background: 'rgba(124,90,245,.15)', color: '#7c5af5' };
-  if (role === 'staff') return { background: 'rgba(79,142,247,.15)', color: '#4f8ef7' };
-  return { background: 'rgba(63,185,80,.10)', color: '#3fb950' };
+  if (role === 'admin') return { background: 'rgba(124,90,245,.15)', color: '#a371f7', border: '1px solid rgba(124,90,245,.3)' };
+  if (role === 'staff') return { background: 'rgba(13,202,240,.15)', color: '#0dcaf0', border: '1px solid rgba(13,202,240,.3)' };
+  return { background: 'rgba(63,185,80,.10)', color: '#3fb950', border: '1px solid rgba(63,185,80,.3)' };
 }
 
 function CreateUserModal({ onClose, onCreated }) {
@@ -520,30 +524,30 @@ function LogsTab({ logs, total, logAction, onFilterChange }) {
 
 const s = {
   center: { padding: 60, textAlign: 'center', color: '#8b949e' },
-  adminBadge: { background: 'rgba(79,142,247,.15)', color: '#4f8ef7', borderRadius: 20, padding: '4px 12px', fontSize: '.78rem', fontWeight: 600 },
-  tabBar: { display: 'flex', gap: 4, marginBottom: 20, background: '#161b22', border: '1px solid #30363d', borderRadius: 12, padding: 4 },
-  tabBtn: { background: 'transparent', border: 'none', color: '#8b949e', padding: '7px 18px', borderRadius: 9, fontSize: '.85rem', fontWeight: 500, cursor: 'pointer', transition: 'all .2s' },
-  tabActive: { background: '#1e2531', color: '#e6edf3' },
+  adminBadge: { background: 'rgba(13, 202, 240, 0.15)', color: '#0dcaf0', borderRadius: 20, padding: '4px 12px', fontSize: '.78rem', fontWeight: 600, border: '1px solid rgba(13, 202, 240, 0.3)' },
+  tabBar: { display: 'flex', gap: 4, marginBottom: 20, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 16, padding: 6, backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)' },
+  tabBtn: { background: 'transparent', border: 'none', color: 'rgba(255, 255, 255, 0.6)', padding: '8px 20px', borderRadius: 12, fontSize: '.85rem', fontWeight: 500, cursor: 'pointer', transition: 'all .3s' },
+  tabActive: { background: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
   grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
-  card: { background: '#161b22', border: '1px solid #30363d', borderRadius: 14, padding: '20px 22px' },
-  cardTitle: { fontSize: '.82rem', fontWeight: 600, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 14 },
-  tableWrap: { background: '#161b22', border: '1px solid #30363d', borderRadius: 14, overflow: 'hidden' },
+  card: { background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 16, padding: '20px 22px', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' },
+  cardTitle: { fontSize: '.82rem', fontWeight: 600, color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 14 },
+  tableWrap: { background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 16, overflow: 'hidden', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  thead: { background: '#1e2531' },
-  th: { padding: '10px 16px', textAlign: 'left', fontSize: '.75rem', color: '#8b949e', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' },
-  tr: { borderBottom: '1px solid #30363d', transition: 'background .15s' },
-  td: { padding: '12px 16px', fontSize: '.87rem' },
-  avatar: { width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '.75rem', color: '#fff', flexShrink: 0 },
-  roleBadge: { display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: '.72rem', fontWeight: 600 },
-  smallBtn: { background: 'transparent', border: '1px solid', borderRadius: 6, padding: '4px 10px', fontSize: '.75rem', cursor: 'pointer' },
-  slaBarBg: { height: 8, background: '#30363d', borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
+  thead: { background: 'rgba(0, 0, 0, 0.2)' },
+  th: { padding: '12px 16px', textAlign: 'left', fontSize: '.75rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' },
+  tr: { borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'background .2s' },
+  td: { padding: '14px 16px', fontSize: '.87rem', color: '#eaf6f7' },
+  avatar: { width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '.75rem', color: '#fff', flexShrink: 0, boxShadow: '0 4px 10px rgba(0,0,0,0.2)' },
+  roleBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: '.72rem', fontWeight: 600 },
+  smallBtn: { background: 'rgba(0, 0, 0, 0.2)', border: '1px solid', borderRadius: 8, padding: '6px 12px', fontSize: '.75rem', cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' },
+  slaBarBg: { height: 8, background: 'rgba(0, 0, 0, 0.2)', borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
   slaBarFill: { height: '100%', borderRadius: 4, transition: 'width .5s' },
-  slaStats: { display: 'flex', gap: 16, fontSize: '.78rem', color: '#8b949e' },
-  primaryBtn: { background: 'linear-gradient(135deg,#4f8ef7,#7c5af5)', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 16px', fontSize: '.83rem', fontWeight: 600, cursor: 'pointer' },
-  ghostBtn: { background: '#1e2531', border: '1px solid #30363d', borderRadius: 9, color: '#e6edf3', padding: '8px 16px', fontSize: '.83rem', cursor: 'pointer' },
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 },
-  modal: { background: '#161b22', border: '1px solid #30363d', borderRadius: 16, padding: 28, width: '100%', maxWidth: 440 },
-  modalInput: { background: '#1e2531', border: '1px solid #30363d', borderRadius: 8, padding: '9px 12px', color: '#e6edf3', fontSize: '.88rem', fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' },
-  smallLabel: { fontSize: '.78rem', fontWeight: 600, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '.04em' },
-  toast: { position: 'fixed', bottom: 24, right: 24, zIndex: 999, background: '#1e2531', border: '1px solid #30363d', borderRadius: 12, padding: '12px 20px', fontSize: '.85rem', boxShadow: '0 8px 32px rgba(0,0,0,.4)' },
+  slaStats: { display: 'flex', gap: 16, fontSize: '.78rem', color: 'rgba(255, 255, 255, 0.6)' },
+  primaryBtn: { background: 'linear-gradient(135deg, #0dcaf0, #048a9f)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 18px', fontSize: '.83rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(13, 202, 240, 0.3)', transition: 'all 0.3s' },
+  ghostBtn: { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, color: '#ffffff', padding: '10px 18px', fontSize: '.83rem', cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.3s' },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 },
+  modal: { background: 'rgba(15, 25, 40, 0.85)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: 24, padding: 32, width: '100%', maxWidth: 440, backdropFilter: 'blur(30px) saturate(200%)', WebkitBackdropFilter: 'blur(30px) saturate(200%)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' },
+  modalInput: { background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '12px 16px', color: '#ffffff', fontSize: '.9rem', fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box', transition: 'all 0.3s' },
+  smallLabel: { fontSize: '.78rem', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', textTransform: 'uppercase', letterSpacing: '.04em' },
+  toast: { position: 'fixed', bottom: 24, right: 24, zIndex: 999, background: 'rgba(15, 25, 40, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 16, padding: '14px 24px', fontSize: '.85rem', color: '#ffffff', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' },
 };

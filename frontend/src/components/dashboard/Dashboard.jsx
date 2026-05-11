@@ -30,10 +30,10 @@ export default function Dashboard() {
       {/* Stats */}
       <div style={c.grid4}>
         {[
-          { icon: <Ticket size={24} color="#4f8ef7" />, value: stats?.total    || 0, label:'Toplam Talep',  sub:'Tüm zamanlar',          color:'#4f8ef7' },
+          { icon: <Ticket size={24} color="#0dcaf0" />, value: stats?.total    || 0, label:'Toplam Talep',  sub:'Tüm zamanlar',          color:'#0dcaf0' },
           { icon: <Clock size={24} color="#e3b341" />, value: stats?.open     || 0, label:'Açık Talepler', sub:`${stats?.critical||0} kritik bekliyor`, color:'#e3b341' },
           { icon: <CheckCircle2 size={24} color="#3fb950" />, value: stats?.resolved || 0, label:'Çözümlendi',    sub:'Bu ay',                  color:'#3fb950' },
-          { icon: <Zap size={24} color="#a371f7" />, value: `${stats?.avg_res_hours || 0}s`, label:'Ort. Çözüm', sub:'Genel ortalama', color:'#a371f7' },
+          { icon: <Zap size={24} color="#0dcaf0" />, value: `${stats?.avg_res_hours || 0}s`, label:'Ort. Çözüm', sub:'Genel ortalama', color:'#0dcaf0' },
           { icon: <AlertTriangle size={24} color="#f85149" />, value: stats?.critical || 0, label:'Kritik',        sub:'SLA takibinde',          color:'#f85149' },
         ].map(({ icon, value, label, sub, color }) => (
           <div key={label} style={c.statCard}>
@@ -61,7 +61,7 @@ export default function Dashboard() {
                   <div key={d.day} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, flex:1, minWidth: 45 }}>
                     <span style={{ fontSize:'.85rem', fontWeight:700, color:'#c9d1d9' }}>{d.c}</span>
                     <div style={{ width:'32px', borderRadius:'3px 3px 0 0',
-                      background:'linear-gradient(180deg,#4f8ef7,#7c5af5)',
+                      background:'linear-gradient(180deg,#0dcaf0,#048a9f)',
                       height: Math.max((d.c / max) * 80, 4) }} title={`${d.c} talep`} />
                     <span style={{ fontSize:'.75rem', color:'#8b949e' }}>{d.day?.slice(5)}</span>
                   </div>
@@ -83,16 +83,16 @@ export default function Dashboard() {
             <div style={{
               width:80, height:80, borderRadius:'50%', flexShrink:0,
               background: `conic-gradient(
-                #4f8ef7 0% ${Math.round((stats?.open||0)/Math.max(stats?.total,1)*100)}%,
+                #0dcaf0 0% ${Math.round((stats?.open||0)/Math.max(stats?.total,1)*100)}%,
                 #e3b341 ${Math.round((stats?.open||0)/Math.max(stats?.total,1)*100)}%
                   ${Math.round(((stats?.open||0)+(stats?.progress||0))/Math.max(stats?.total,1)*100)}%,
                 #3fb950 ${Math.round(((stats?.open||0)+(stats?.progress||0))/Math.max(stats?.total,1)*100)}% 100%)`,
               position:'relative',
             }}>
-              <div style={{ position:'absolute', top:18, left:18, right:18, bottom:18, borderRadius:'50%', background:'#161b22' }} />
+              <div style={{ position:'absolute', top:18, left:18, right:18, bottom:18, borderRadius:'50%', background:'rgba(20, 30, 40, 0.9)' }} />
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {[['#4f8ef7','Açık',stats?.open],['#e3b341','İşlemde',stats?.progress],['#3fb950','Çözüldü',stats?.resolved],['#8b949e','Kapalı',stats?.closed]].map(([col,lbl,val]) => (
+              {[['#0dcaf0','Açık',stats?.open],['#e3b341','İşlemde',stats?.progress],['#3fb950','Çözüldü',stats?.resolved],['#8b949e','Kapalı',stats?.closed]].map(([col,lbl,val]) => (
                 <div key={lbl} style={{ display:'flex', alignItems:'center', gap:6, fontSize:'.78rem' }}>
                   <span style={{ width:8, height:8, borderRadius:'50%', background:col, flexShrink:0 }} />
                   {lbl} ({val || 0})
@@ -139,24 +139,48 @@ export function TicketRow({ ticket: t, onClick }) {
 }
 
 const c = {
-  loading: { padding:60, textAlign:'center', color:'#8b949e' },
-  grid4: { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:16, marginBottom:24 },
+  loading: { padding: 60, textAlign: 'center', color: '#8b949e' },
+  grid4: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 },
   statCard: {
-    background:'#161b22', border:'1px solid #30363d', borderRadius:14,
-    padding:'18px 20px', transition:'transform .2s',
+    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 20,
+    padding: '22px 24px', transition: 'all 0.3s', boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
   },
-  chartRow: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24 },
-  chartCard: { background:'#161b22', border:'1px solid #30363d', borderRadius:14, padding:20 },
-  chartTitle: { fontSize:'.85rem', fontWeight:600, color:'#8b949e', display: 'flex', alignItems: 'center', gap: 6 },
-  ticketList: { display:'flex', flexDirection:'column', gap:8 },
+  chartRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 },
+  chartCard: { 
+    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', 
+    border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 20, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.2)' 
+  },
+  chartTitle: { fontSize: '.85rem', fontWeight: 600, color: 'rgba(255, 255, 255, 0.6)', display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '.05em' },
+  ticketList: { display: 'flex', flexDirection: 'column', gap: 10 },
   ticketCard: {
-    background:'#161b22', border:'1px solid #30363d', borderRadius:12,
-    padding:'14px 18px', display:'flex', alignItems:'center', gap:14,
-    cursor:'pointer', transition:'all .2s',
+    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 16,
+    padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
+    cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
   },
   ghostBtn: {
-    background:'#1e2531', border:'1px solid #30363d', borderRadius:8,
-    color:'#e6edf3', padding:'6px 14px', fontSize:'.8rem', cursor:'pointer',
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    color: '#ffffff', padding: '8px 16px', fontSize: '.8rem', cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.3s'
   },
-  empty: { textAlign:'center', padding:40, color:'#8b949e' },
+  empty: { textAlign: 'center', padding: 40, color: '#8b949e' },
 };
+
+// ... inside Dashboard component ...
+// Update the stats map:
+// From: { icon: <Ticket size={24} color="#4f8ef7" />, value: stats?.total    || 0, label:'Toplam Talep',  sub:'Tüm zamanlar',          color:'#4f8ef7' },
+// To: { icon: <Ticket size={24} color="#0dcaf0" />, value: stats?.total    || 0, label:'Toplam Talep',  sub:'Tüm zamanlar',          color:'#0dcaf0' },
+
+// Update the bar chart:
+// From: background:'linear-gradient(180deg,#4f8ef7,#7c5af5)',
+// To: background:'linear-gradient(180deg,#0dcaf0,#048a9f)',
+
+// Update the donut chart background:
+// From: #4f8ef7
+// To: #0dcaf0
+
+// Update the internal circle background:
+// From: background:'#161b22'
+// To: background:'rgba(20, 30, 40, 0.9)'
+
+// I will apply these changes in a multi_replace for safety.
