@@ -46,14 +46,21 @@ router.get('/', (req, res) => {
   if (category)    { where.push('t.category = ?');    params.push(category); }
   if (assigned_to) { where.push('t.assigned_to = ?'); params.push(assigned_to); }
   if (q) {
-    where.push('(t.title LIKE ? OR t.description LIKE ? OR t.ticket_no LIKE ?)');
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    where.push('(t.title LIKE ? OR t.description LIKE ? OR t.ticket_no LIKE ? OR creator.name LIKE ? OR assignee.name LIKE ?)');
+    const sq = `%${q}%`;
+    params.push(sq, sq, sq, sq, sq);
   }
 
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
   const offset = (Number(page) - 1) * Number(limit);
 
-  const total = db.prepare(`SELECT COUNT(*) as c FROM tickets t ${whereClause}`).get(...params).c;
+  const total = db.prepare(`
+    SELECT COUNT(*) as c 
+    FROM tickets t 
+    LEFT JOIN users creator ON t.created_by = creator.id
+    LEFT JOIN users assignee ON t.assigned_to = assignee.id
+    ${whereClause}
+  `).get(...params).c;
   
   let orderBy = "CASE t.priority WHEN 'Kritik' THEN 1 WHEN 'Yüksek' THEN 2 WHEN 'Orta' THEN 3 ELSE 4 END, t.created_at DESC";
   if (sort === 'time_desc') orderBy = "t.created_at DESC";
@@ -195,20 +202,29 @@ router.post('/', (req, res) => {
   }
 
   const db = getDb();
-  const max = db.prepare('SELECT IFNULL(MAX(id), 0) as m FROM tickets').get().m;
-  const ticket_no = 'HD-' + String(max + 1).padStart(3, '0');
+  let ticketId;
+  let ticket_no;
 
-  const result = db.prepare(`
-    INSERT INTO tickets (ticket_no, title, description, category, priority, impact, created_by, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))
-  `).run(ticket_no, title, description, category, priority, impact || null, req.user.id);
+  db.transaction(() => {
+    // 1. Önce geçici bir numara ile ekle (NOT NULL kısıtlamasını aşmak için)
+    const tempNo = `TEMP-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const result = db.prepare(`
+      INSERT INTO tickets (ticket_no, title, description, category, priority, impact, created_by, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))
+    `).run(tempNo, title, description, category, priority, impact || null, req.user.id);
 
-  db.prepare(`
-    INSERT INTO ticket_logs (ticket_id, user_id, action, detail)
-    VALUES (?, ?, 'created', 'Talep oluşturuldu')
-  `).run(result.lastInsertRowid, req.user.id);
+    ticketId = result.lastInsertRowid;
+    // 2. Gerçek ticket_no'yu ID üzerinden oluştur ve güncelle
+    ticket_no = 'HD-' + String(ticketId).padStart(3, '0');
+    db.prepare('UPDATE tickets SET ticket_no = ? WHERE id = ?').run(ticket_no, ticketId);
 
-  const ticket = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(result.lastInsertRowid);
+    db.prepare(`
+      INSERT INTO ticket_logs (ticket_id, user_id, action, detail)
+      VALUES (?, ?, 'created', 'Talep oluşturuldu')
+    `).run(ticketId, req.user.id);
+  })();
+
+  const ticket = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(ticketId);
   
   // Yeni talepte tüm adminlere bildirim gönder
   const admins = db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
@@ -462,14 +478,6 @@ router.patch('/:id/rate', requireRole('user'), (req, res) => {
 
   const updated = db.prepare(`${TICKET_SELECT} WHERE t.id = ?`).get(ticket.id);
   res.json({ ticket: updated });
-});
-
-// Multer hata yönetimi
-router.use((err, _req, res, _next) => {
-  if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ error: 'Dosya boyutu 1 MB\'yı aşamaz' });
-  }
-  res.status(400).json({ error: err.message });
 });
 
 module.exports = router;

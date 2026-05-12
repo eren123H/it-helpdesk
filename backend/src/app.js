@@ -40,8 +40,8 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── Request logger (dev) ──
 app.use((req, _res, next) => {
@@ -88,7 +88,12 @@ if (fs.existsSync(publicDir)) {
 // ── Error handler ──
 app.use((err, _req, res, _next) => {
   console.error('Sunucu hatası:', err);
-  res.status(500).json({ error: 'Sunucu hatası' });
+  
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'Dosya boyutu çok büyük. Maksimum limit: 10MB' });
+  }
+
+  res.status(500).json({ error: err.message || 'Sunucu hatası' });
 });
 
 // ── HTTP + WebSocket sunucusu ──
