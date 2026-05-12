@@ -100,12 +100,16 @@ app.use((err, _req, res, _next) => {
 const server = http.createServer(app);
 initWsServer(server);
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🛡️  IT HelpDesk API çalışıyor → http://0.0.0.0:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-  console.log(`   WebSocket: ws://localhost:${PORT}/ws\n`);
-  startBackupScheduler();
-  startSlaChecker();
-});
+const isTest = process.env.NODE_ENV === 'test';
+
+if (!isTest) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🛡️  IT HelpDesk API çalışıyor → http://0.0.0.0:${PORT}`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+    console.log(`   WebSocket: ws://localhost:${PORT}/ws\n`);
+    startBackupScheduler();
+    startSlaChecker();
+  });
+}
 
 module.exports = app;

@@ -1,13 +1,18 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../../data/helpdesk.db');
+function getDbPath() {
+  const raw = process.env.SQLITE_DB_PATH;
+  if (raw === ':memory:') return ':memory:';
+  if (raw && String(raw).trim()) return String(raw).trim();
+  return path.join(__dirname, '../../data/helpdesk.db');
+}
 
 let db;
 
 function getDb() {
   if (!db) {
-    db = new Database(DB_PATH);
+    db = new Database(getDbPath());
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     initTables();
@@ -119,4 +124,15 @@ function initTables() {
   }
 }
 
-module.exports = { getDb };
+function closeDb() {
+  if (db) {
+    try {
+      db.close();
+    } catch (_) {
+      /* ignore */
+    }
+    db = null;
+  }
+}
+
+module.exports = { getDb, closeDb };

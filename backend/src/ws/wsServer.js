@@ -52,17 +52,20 @@ function initWsServer(httpServer) {
     ws.on('close', () => clearTimeout(authTimeout));
   });
 
-  // Arka planda her 2 saatte bir (7200000 ms) tüm bağlantıları kontrol et (Çöp Toplayıcı - Garbage Collector)
-  // Eğer istemci aniden internetten koparsa (elektrik gitmesi vb.) sunucuda sonsuza dek kalmasın diye.
-  const interval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-      if (ws.isAlive === false) return ws.terminate(); // Ölü bağlantıyı zorla kapat
-      ws.isAlive = false;
-      ws.ping(); // İstemciye ping at, yaşarsa 'pong' döner ve isAlive true olur
-    });
-  }, 7200000);
+  // Jest sürecinin kapanmamasına sebep olmaması için test ortamında GC zamanlayıcısı kullanılmaz.
+  let interval;
+  if (process.env.NODE_ENV !== 'test') {
+    // Arka planda her 2 saatte bir (7200000 ms) tüm bağlantıları kontrol et (Çöp Toplayıcı - Garbage Collector)
+    interval = setInterval(() => {
+      wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) return ws.terminate(); // Ölü bağlantıyı zorla kapat
+        ws.isAlive = false;
+        ws.ping(); // İstemciye ping at, yaşarsa 'pong' döner ve isAlive true olur
+      });
+    }, 7200000);
 
-  wss.on('close', () => clearInterval(interval));
+    wss.on('close', () => clearInterval(interval));
+  }
 
   return wss;
 }
