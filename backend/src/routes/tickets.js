@@ -70,11 +70,9 @@ router.get('/stats', requireRole('staff', 'admin'), (req, res) => {
   const stats = {
     total:    db.prepare("SELECT COUNT(*) as c FROM tickets").get().c,
     open:     db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'open'").get().c,
-    progress: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'progress'").get().c,
     resolved: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'resolved'").get().c,
-    closed:   db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'closed'").get().c,
     avg_res_hours: Number((db.prepare("SELECT AVG((julianday(resolved_at) - julianday(created_at)) * 24) as avg_res FROM tickets WHERE resolved_at IS NOT NULL").get().avg_res || 0).toFixed(1)),
-    critical: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE priority = 'Kritik' AND status NOT IN ('resolved','closed')").get().c,
+    critical: db.prepare("SELECT COUNT(*) as c FROM tickets WHERE priority = 'Kritik' AND status = 'open'").get().c,
     by_category: db.prepare("SELECT category, COUNT(*) as c FROM tickets GROUP BY category ORDER BY c DESC").all(),
     by_priority: db.prepare("SELECT priority, COUNT(*) as c FROM tickets GROUP BY priority").all(),
     daily_last7: db.prepare(`
@@ -94,8 +92,8 @@ router.get('/departments_report', requireRole('admin'), (req, res) => {
     by_department: db.prepare(`
       SELECT u.department, 
              COUNT(t.id) as total_tickets,
-             SUM(CASE WHEN t.status IN ('open', 'progress') THEN 1 ELSE 0 END) as open_tickets,
-             SUM(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 ELSE 0 END) as resolved_tickets,
+             SUM(CASE WHEN t.status = 'open' THEN 1 ELSE 0 END) as open_tickets,
+             SUM(CASE WHEN t.status = 'resolved' THEN 1 ELSE 0 END) as resolved_tickets,
              AVG((julianday(t.resolved_at) - julianday(t.created_at)) * 24) as avg_res_hours
       FROM users u
       LEFT JOIN tickets t ON t.created_by = u.id
@@ -173,7 +171,7 @@ router.post('/merge', requireRole('admin'), (req, res) => {
     
     const t = db.prepare('SELECT id, ticket_no FROM tickets WHERE id = ?').get(tid);
     if (t) {
-      db.prepare(`UPDATE tickets SET status = 'closed', merged_into = ?, updated_at = datetime('now','localtime') WHERE id = ?`).run(target_id, tid);
+      db.prepare(`UPDATE tickets SET status = 'resolved', merged_into = ?, updated_at = datetime('now','localtime') WHERE id = ?`).run(target_id, tid);
       
       // Kapattığımız bilete not
       db.prepare(`INSERT INTO comments (ticket_id, user_id, body, internal) VALUES (?, ?, ?, 1)`).run(tid, req.user.id, `Bu bilet #${target.ticket_no} ile birleştirilerek kapatıldı.`);
@@ -243,7 +241,7 @@ router.post('/', (req, res) => {
 // PATCH /api/tickets/:id/status  — durum güncelle
 router.patch('/:id/status', requireRole('staff', 'admin'), (req, res) => {
   const { status } = req.body;
-  const validStatuses = ['open', 'progress', 'resolved', 'closed'];
+  const validStatuses = ['open', 'resolved'];
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ error: 'Geçersiz durum' });
   }

@@ -53,7 +53,7 @@ export default function TicketDetail() {
     try {
       await api.patch(`/tickets/${id}/status`, { status });
       await load();
-      const l = { progress: 'İşleme alındı', resolved: 'Çözümlendi', closed: 'Kapatıldı', open: 'Yeniden açıldı' };
+      const l = { resolved: 'Çözümlendi', open: 'Yeniden açıldı' };
       showToast(l[status] || 'Durum güncellendi');
     } catch (e) {
       showToast('Hata: ' + (e.response?.data?.error || 'Güncelleme başarısız'));
@@ -137,9 +137,7 @@ export default function TicketDetail() {
               </div>
               {isStaffOrAdmin && (
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                  {ticket.status !== 'progress' && ticket.status !== 'resolved' && ticket.status !== 'closed' &&
-                    <button style={{...s.actionBtn('#e3b341'), display:'flex', alignItems:'center', gap:6}} onClick={() => updateStatus('progress')}><Zap size={16}/> İşleme Al</button>}
-                  {ticket.status !== 'resolved' && ticket.status !== 'closed' &&
+                  {ticket.status === 'open' &&
                     <button style={{...s.actionBtn('#3fb950'), display:'flex', alignItems:'center', gap:6}} onClick={() => {
                       if (user.role !== 'admin' && !ticket.assigned_to) {
                         alert('Öncelikle bileti üzerinize almalısınız (Atama yapılmadan bilet çözümlenemez)!');
@@ -147,9 +145,7 @@ export default function TicketDetail() {
                         updateStatus('resolved');
                       }
                     }}>Çözümlendi</button>}
-                  {ticket.status !== 'closed' && user.role === 'admin' &&
-                    <button style={{...s.actionBtn('#8b949e'), display:'flex', alignItems:'center', gap:6}} onClick={() => updateStatus('closed')}><Lock size={16}/> Kapat</button>}
-                  {ticket.status === 'closed' &&
+                  {ticket.status === 'resolved' && user.role === 'admin' &&
                     <button style={{...s.actionBtn('#4f8ef7'), display:'flex', alignItems:'center', gap:6}} onClick={() => updateStatus('open')}><Unlock size={16}/> Yeniden Aç</button>}
                 </div>
               )}
@@ -163,7 +159,7 @@ export default function TicketDetail() {
           </div>
 
           {/* Rating Section */}
-          {(ticket.status === 'resolved' || ticket.status === 'closed') && (
+          {ticket.status === 'resolved' && (
             (user.role === 'admin' && ticket.rating) || 
             (user.role === 'user' && ticket.created_by === user.id)
           ) && (

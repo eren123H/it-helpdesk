@@ -1,8 +1,6 @@
 const S = {
-  open: { label: 'Açık', bg: 'rgba(13, 202, 240, 0.15)', color: '#0dcaf0' },
-  progress: { label: 'İşlemde', bg: 'rgba(227,179,65,0.15)', color: '#e3b341' },
+  open: { label: 'Yeni', bg: 'rgba(13, 202, 240, 0.15)', color: '#0dcaf0' },
   resolved: { label: 'Çözüldü', bg: 'rgba(63,185,80,0.15)', color: '#3fb950' },
-  closed:   { label: 'Kapalı', bg: 'rgba(139,148,158,0.15)', color: '#8b949e' },
 };
 const P = {
   Kritik: { bg: 'rgba(248,81,73,0.15)', color: '#f85149' },

@@ -69,10 +69,8 @@ export default function TicketList() {
   const filters = [
     { key: 'active', label: 'Aktif Talepler', adminOnly: true },
     { key: 'all', label: 'Tümü' },
-    { key: 'open', label: 'Yeni Açılan' },
-    { key: 'progress', label: 'İşlemde' },
+    { key: 'open', label: 'Yeni' },
     { key: 'resolved', label: 'Çözüldü' },
-    { key: 'closed', label: 'Kapalı' },
     { key: 'critical', label: 'Kritik Bekleyen' },
   ].filter(f => !f.adminOnly || user.role !== 'user');
 
@@ -88,7 +86,7 @@ export default function TicketList() {
   };
 
   const getSlaBadge = (t) => {
-    if (t.status === 'resolved' || t.status === 'closed') return null;
+    if (t.status === 'resolved') return null;
     const limits = { 'Kritik': 4, 'Yüksek': 8, 'Orta': 24, 'Düşük': 48 };
     const limitH = limits[t.priority] || 24;
     const diff = new Date() - new Date(t.created_at);
@@ -194,10 +192,10 @@ export default function TicketList() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: '.93rem', marginBottom: 2 }}>
                   {t.title}
-                  {(t.status === 'open' || t.status === 'progress') && (
+                  {t.status === 'open' && (
                     getSlaBadge(t)
                   )}
-                  {(t.status === 'resolved' || t.status === 'closed') && (
+                  {t.status === 'resolved' && (
                     <span style={{...s.hoursBadge, color: '#3fb950', background: 'rgba(63,185,80,0.1)'}}>
                       Çözüm: {t.resolved_at ? Math.floor((new Date(t.resolved_at) - new Date(t.created_at)) / (1000 * 60 * 60)) : Math.floor((new Date(t.updated_at) - new Date(t.created_at)) / (1000 * 60 * 60))} sa.
                     </span>

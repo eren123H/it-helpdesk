@@ -84,15 +84,13 @@ export default function Dashboard() {
               width:80, height:80, borderRadius:'50%', flexShrink:0,
               background: `conic-gradient(
                 #0dcaf0 0% ${Math.round((stats?.open||0)/Math.max(stats?.total,1)*100)}%,
-                #e3b341 ${Math.round((stats?.open||0)/Math.max(stats?.total,1)*100)}%
-                  ${Math.round(((stats?.open||0)+(stats?.progress||0))/Math.max(stats?.total,1)*100)}%,
-                #3fb950 ${Math.round(((stats?.open||0)+(stats?.progress||0))/Math.max(stats?.total,1)*100)}% 100%)`,
+                #3fb950 ${Math.round((stats?.open||0)/Math.max(stats?.total,1)*100)}% 100%)`,
               position:'relative',
             }}>
               <div style={{ position:'absolute', top:18, left:18, right:18, bottom:18, borderRadius:'50%', background:'rgba(20, 30, 40, 0.9)' }} />
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {[['#0dcaf0','Açık',stats?.open],['#e3b341','İşlemde',stats?.progress],['#3fb950','Çözüldü',stats?.resolved],['#8b949e','Kapalı',stats?.closed]].map(([col,lbl,val]) => (
+              {[['#0dcaf0','Yeni',stats?.open],['#3fb950','Çözüldü',stats?.resolved]].map(([col,lbl,val]) => (
                 <div key={lbl} style={{ display:'flex', alignItems:'center', gap:6, fontSize:'.78rem' }}>
                   <span style={{ width:8, height:8, borderRadius:'50%', background:col, flexShrink:0 }} />
                   {lbl} ({val || 0})

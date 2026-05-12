@@ -6,6 +6,9 @@ import DepartmentReport from '../dashboard/DepartmentReport';
 export default function AdminPanel() {
   const [tab, setTab] = useState('users');
   const [users, setUsers] = useState([]);
+  const [userTotal, setUserTotal] = useState(0);
+  const [userPage, setUserPage] = useState(1);
+  const [userSearch, setUserSearch] = useState('');
   const [sla, setSla] = useState(null);
   const [report, setReport] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -15,13 +18,42 @@ export default function AdminPanel() {
   const [showCreate, setCreate] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [toast, setToast] = useState('');
+  const [busyUsers, setBusyUsers] = useState(false);
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
-  async function loadUsers() {
-    const { data } = await api.get('/users');
-    setUsers(data.users);
+  async function loadUsers(reset = false) {
+    setBusyUsers(true);
+    try {
+      const currentPage = reset ? 1 : userPage;
+      const { data } = await api.get('/users', { params: { page: currentPage, q: userSearch } });
+      if (currentPage === 1) {
+        setUsers(data.users);
+      } else {
+        setUsers(prev => [...prev, ...data.users]);
+      }
+      setUserTotal(data.total);
+    } finally {
+      setBusyUsers(false);
+    }
   }
+
+  // userSearch değiştiğinde userPage'i sıfırla ve yeniden yükle
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => {
+      setUserPage(1);
+      loadUsers(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [userSearch]);
+
+  // userPage değiştiğinde (eğer 1'den büyükse) yükle
+  useEffect(() => {
+    if (userPage > 1) {
+      loadUsers();
+    }
+  }, [userPage]);
   async function loadSla() {
     const { data } = await api.get('/admin/sla');
     setSla(data.sla);
@@ -80,7 +112,16 @@ export default function AdminPanel() {
       {/* ── USERS ── */}
       {tab === 'users' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: 300 }}>
+              <input
+                style={{ ...s.modalInput, paddingLeft: 12 }}
+                type="text"
+                placeholder="İsim, e-posta veya departman ara..."
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+              />
+            </div>
             <button style={{ ...s.primaryBtn, display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setCreate(true)}>
               <Plus size={16} /> Yeni Kullanıcı
             </button>
@@ -150,6 +191,14 @@ export default function AdminPanel() {
               </tbody>
             </table>
           </div>
+          
+          {users.length > 0 && users.length < userTotal && (
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <button style={s.ghostBtn} onClick={() => setUserPage(p => p + 1)} disabled={busyUsers}>
+                {busyUsers ? 'Yükleniyor...' : 'Daha Fazla Kullanıcı Göster'}
+              </button>
+            </div>
+          )}
           {showCreate && <CreateUserModal onClose={() => setCreate(false)} onCreated={async () => { await loadUsers(); setCreate(false); showToast('Kullanıcı başarıyla oluşturuldu'); }} />}
           {editUser && <EditUserModal user={editUser} onClose={() => setEditUser(null)} onUpdated={async () => { await loadUsers(); setEditUser(null); showToast('Kullanıcı başarıyla güncellendi'); }} />}
         </div>
@@ -211,7 +260,7 @@ export default function AdminPanel() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {report.staff_workload.map(st => {
                 const totalWork = st.total || 1;
-                const progressPct = ((st.progress + st.open) / totalWork) * 100;
+                const openPct = (st.open / totalWork) * 100;
                 const resolvedPct = (st.resolved / totalWork) * 100;
                 return (
                   <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid #30363d' }}>
@@ -226,12 +275,12 @@ export default function AdminPanel() {
 
                       {/* Mini Progress Bar */}
                       <div style={{ height: 4, width: '100%', background: '#30363d', borderRadius: 2, display: 'flex', overflow: 'hidden', marginTop: 6, marginBottom: 4 }}>
-                        <div style={{ width: `${progressPct}%`, background: '#e3b341' }} />
+                        <div style={{ width: `${openPct}%`, background: '#e3b341' }} />
                         <div style={{ width: `${resolvedPct}%`, background: '#3fb950' }} />
                       </div>
 
                       <div style={{ fontSize: '.7rem', color: '#8b949e', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Açık/İşlemde: <strong style={{ color: '#e3b341' }}>{st.open + st.progress}</strong> · Çözüldü: <strong style={{ color: '#3fb950' }}>{st.resolved}</strong></span>
+                        <span>Bekleyen: <strong style={{ color: '#e3b341' }}>{st.open}</strong> · Çözüldü: <strong style={{ color: '#3fb950' }}>{st.resolved}</strong></span>
                         <span style={{ color: st.avg_rating ? '#e3b341' : '#8b949e', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                           {st.avg_rating ? <>{st.avg_rating} <Star size={12} fill="#e3b341" /></> : 'Değerlendirme Yok'}
                         </span>

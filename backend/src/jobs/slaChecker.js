@@ -14,7 +14,7 @@ function checkSLA() {
   const tickets = db.prepare(`
     SELECT id, ticket_no, title, priority, created_at, created_by 
     FROM tickets 
-    WHERE status IN ('open', 'progress') AND sla_breached = 0
+    WHERE status = 'open' AND sla_breached = 0
   `).all();
 
   if (tickets.length === 0) return;
