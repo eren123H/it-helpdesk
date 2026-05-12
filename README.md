@@ -12,7 +12,7 @@ Ayni agdaki herkes tarayicidan erisir, sunucu kurulumu icin tek bir komut yeterl
 - **SLA & Is Yuku Raporlari:** Admin panelinde personel is yuku, ortalama cozum sureleri ve SLA ihlal riskleri
 - **Personel Memnuniyeti (CSAT):** Cozumlenen biletlere kullanicilarin verdigi 5 yildizli degerlendirmelerin genel ve personel bazli raporlanmasi
 - **Akilli Listeleme:** Oncelik, durum, kategori, arama ve siralama destekli filtreleme (En Yeni / En Eski / Oncelik)
-- **Dosya Ekleri:** Biletlere gorsel, PDF, TXT, DOCX yukleme (maks. 1 MB)
+- **Dosya Ekleri:** Biletlere gorsel, PDF, TXT, DOCX yukleme (maks. 10 MB)
 - **Ic Notlar:** Personeller arasi "Kullanicinin gormedigi" ic notlasma sistemi
 - **Bilet Birlestirme:** Admin tarafindan birden fazla bileti tek bilete birlestirme
 - **Oncelik Degistirme:** Staff/Admin tarafindan bilet onceligi guncelleme
@@ -253,7 +253,7 @@ PATCH  /api/tickets/:id/status      Durum guncelle (open, progress, resolved, cl
 PATCH  /api/tickets/:id/priority    Oncelik guncelle (Kritik, Yuksek, Orta, Dusuk)
 PATCH  /api/tickets/:id/assign      Personel ata / atamayi kaldir
 POST   /api/tickets/:id/comments    Yorum veya ic not ekle
-POST   /api/tickets/:id/attachments Dosya yukle (multipart/form-data, maks 1MB)
+POST   /api/tickets/:id/attachments Dosya yukle (multipart/form-data, maks 10MB)
 PATCH  /api/tickets/:id/rate        CSAT degerlendirmesi (1-5 yildiz, sadece user)
 POST   /api/tickets/merge           Biletleri birlestir (sadece admin)
 ```
@@ -301,7 +301,7 @@ GET    /api/health                  Saglik kontrolu
 | DOCX | application/vnd.openxmlformats-officedocument.wordprocessingml.document |
 | DOC | application/msword |
 
-Maksimum dosya boyutu: **1 MB**
+Maksimum dosya boyutu: **10 MB**
 
 ---
 
@@ -326,7 +326,7 @@ TicketProje/
 │       │   └── logger.js         <- Sistem log yardimci fonksiyonu (sysLog)
 │       ├── middleware/
 │       │   ├── auth.js           <- JWT dogrulama + requireRole kontrol
-│       │   └── upload.js         <- Multer dosya yukleme (1MB limit, MIME filtre)
+│       │   └── upload.js         <- Multer dosya yukleme (10MB limit, MIME filtre)
 │       └── routes/
 │           ├── auth.js           <- POST /login, GET /me
 │           ├── tickets.js        <- Ticket CRUD + yorum + atama + birlestirme + CSAT

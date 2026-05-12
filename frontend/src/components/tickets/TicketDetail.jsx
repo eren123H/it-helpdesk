@@ -21,7 +21,6 @@ export default function TicketDetail() {
   const [posting, setPosting]   = useState(false);
   const [toast, setToast]       = useState('');
   const [rating, setRating]     = useState(0);
-  const [ratingComment, setRatingComment] = useState('');
 
   function showToast(msg) {
     setToast(msg);
@@ -73,7 +72,7 @@ export default function TicketDetail() {
   async function submitRating() {
     if (!rating) return;
     try {
-      await api.patch(`/tickets/${id}/rate`, { rating, comment: ratingComment });
+      await api.patch(`/tickets/${id}/rate`, { rating });
       await load();
       showToast('Değerlendirme kaydedildi');
     } catch (e) {
@@ -436,12 +435,3 @@ const s = {
     borderRadius: 16, padding: '14px 24px', fontSize: '.85rem', color: '#ffffff', boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
   },
 };
-
-// ... inside the component, where priority buttons are rendered ...
-// Find and replace the priority buttons map:
-// From: {[['Kritik','#f85149',<AlertTriangle size={14}/>],['Yüksek','#ff7b72',<AlertCircle size={14}/>],['Orta','#e3b341',<Info size={14}/>],['Düşük','#3fb950',<CheckCircle2 size={14}/>]].map(([p, col, icon]) => (
-// To: {[['Kritik','#f85149'],['Yüksek','#ff7b72'],['Orta','#e3b341'],['Düşük','#3fb950']].map(([p, col]) => (
-// and remove {icon} from the content.
-
-// I will do this in the same multi-replace or separate replace. 
-// Let's use multi_replace for accuracy.

@@ -35,6 +35,18 @@ const PRIORITY_INFO = {
   Düşük: { color: '#3fb950', icon: <CheckCircle2 size={24} />, label: 'Düşük', desc: 'Küçük aksaklık veya rutin talepler.' },
 };
 
+const ALLOWED_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'text/plain',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export default function NewTicket() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ title: '', category: '', impact: IMPACTS[0].id, description: '' });
@@ -57,6 +69,16 @@ export default function NewTicket() {
     // Maksimum 5 dosya sınırı
     if (files.length + arr.length > 5) {
       setToast('En fazla 5 dosya ekleyebilirsiniz');
+      return;
+    }
+    const invalidType = arr.find(f => !ALLOWED_MIME.has(f.type));
+    if (invalidType) {
+      setToast(`Desteklenmeyen dosya türü: ${invalidType.name}`);
+      return;
+    }
+    const oversized = arr.find(f => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      setToast(`Dosya çok büyük (maks 10MB): ${oversized.name}`);
       return;
     }
     // Her dosya için önizleme URL'si oluştur
@@ -82,17 +104,29 @@ export default function NewTicket() {
   const submit = async () => {
     if (!validate()) return;
     setSubmitting(true);
+    let createdTicketId = null;
+
     try {
       const { data } = await api.post('/tickets', { ...form, priority: autoPriority });
-      
+      createdTicketId = data.ticket.id;
+
       if (files.length > 0) {
         const fd = new FormData();
         files.forEach(f => fd.append('files', f)); // Backend 'files' bekliyor
-        await api.post(`/tickets/${data.ticket.id}/attachments`, fd);
+        try {
+          await api.post(`/tickets/${createdTicketId}/attachments`, fd);
+        } catch (uploadErr) {
+          setToast(
+            'Talep oluşturuldu ancak ek dosyalar yüklenemedi: ' +
+            (uploadErr.response?.data?.error || 'Dosya yükleme hatası')
+          );
+          setTimeout(() => navigate(`/tickets/${createdTicketId}`), 1800);
+          return;
+        }
       }
 
       setToast('Talep başarıyla oluşturuldu!');
-      setTimeout(() => navigate(`/tickets/${data.ticket.id}`), 1500);
+      setTimeout(() => navigate(`/tickets/${createdTicketId}`), 1500);
     } catch (err) {
       setToast('Hata: ' + (err.response?.data?.error || 'İşlem başarısız'));
     } finally { setSubmitting(false); }

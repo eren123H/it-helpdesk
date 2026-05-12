@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { getDb } = require('../db/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { sysLog } = require('../db/logger');
+const { parseLimit, parsePage } = require('../utils/pagination');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -10,7 +11,9 @@ router.use(authMiddleware);
 // GET /api/users  — staff listesi (staff + admin görebilir)
 router.get('/', requireRole('staff', 'admin'), (req, res) => {
   const db = getDb();
-  const { role, q, page = 1, limit = 20 } = req.query;
+  const { role, q } = req.query;
+  const page = parsePage(req.query.page);
+  const limit = parseLimit(req.query.limit, 20);
   
   let where = [];
   const params = [];
@@ -27,7 +30,7 @@ router.get('/', requireRole('staff', 'admin'), (req, res) => {
   }
 
   const whereClause = where.length ? ' WHERE ' + where.join(' AND ') : '';
-  const offset = (Number(page) - 1) * Number(limit);
+  const offset = (page - 1) * limit;
 
   const total = db.prepare(`SELECT COUNT(*) as c FROM users ${whereClause}`).get(...params).c;
   
@@ -39,9 +42,9 @@ router.get('/', requireRole('staff', 'admin'), (req, res) => {
     LIMIT ? OFFSET ?
   `;
   
-  const users = db.prepare(query).all(...params, Number(limit), offset);
+  const users = db.prepare(query).all(...params, limit, offset);
   
-  res.json({ users, total, page: Number(page), limit: Number(limit) });
+  res.json({ users, total, page, limit });
 });
 
 // GET /api/users/me  — kendi profili

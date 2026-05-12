@@ -2,9 +2,10 @@ const express = require('express');
 const path    = require('path');
 const { getDb } = require('../db/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
-const { upload } = require('../middleware/upload');
+const { upload, validateUploadedFiles } = require('../middleware/upload');
 const { sendNewTicketMail, sendTicketResolvedMail } = require('../mail/mailer');
 const { sendToUser, sendToUsers } = require('../ws/wsServer');
+const { parseLimit, parsePage } = require('../utils/pagination');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -25,7 +26,9 @@ const TICKET_SELECT = `
 // GET /api/tickets  — liste (filtre destekli)
 router.get('/', (req, res) => {
   const db = getDb();
-  const { status, priority, category, assigned_to, exclude_status, q, sort = 'priority', page = 1, limit = 20 } = req.query;
+  const { status, priority, category, assigned_to, exclude_status, q, sort = 'priority' } = req.query;
+  const page = parsePage(req.query.page);
+  const limit = parseLimit(req.query.limit, 20);
 
   let where = [];
   let params = [];
@@ -52,7 +55,7 @@ router.get('/', (req, res) => {
   }
 
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  const offset = (Number(page) - 1) * Number(limit);
+  const offset = (page - 1) * limit;
 
   const total = db.prepare(`
     SELECT COUNT(*) as c 
@@ -66,9 +69,9 @@ router.get('/', (req, res) => {
   if (sort === 'time_desc') orderBy = "t.created_at DESC";
   else if (sort === 'time_asc') orderBy = "t.created_at ASC";
 
-  const rows  = db.prepare(`${TICKET_SELECT} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).all(...params, Number(limit), offset);
+  const rows  = db.prepare(`${TICKET_SELECT} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).all(...params, limit, offset);
 
-  res.json({ total, page: Number(page), limit: Number(limit), tickets: rows });
+  res.json({ total, page, limit, tickets: rows });
 });
 
 // GET /api/tickets/stats  — dashboard için
@@ -388,8 +391,15 @@ router.post('/:id/comments', (req, res) => {
         // Atanmamışsa adminlere bildir
         const admins = db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
         const stmt = db.prepare("INSERT INTO notifications (user_id, ticket_id, message) VALUES (?, ?, ?)");
+        const msg = `#${ticket.ticket_no} numaralı atanmamış talebe yanıt geldi.`;
         for (const a of admins) {
-          stmt.run(a.id, ticket.id, `#${ticket.ticket_no} numaralı atanmamış talebe yanıt geldi.`);
+          stmt.run(a.id, ticket.id, msg);
+        }
+        if (admins.length > 0) {
+          sendToUsers(
+            admins.map((a) => a.id),
+            { type: 'new_notification', message: msg, ticket_id: ticket.id }
+          );
         }
       }
     } else if (ticket.created_by !== req.user.id) {
@@ -399,6 +409,11 @@ router.post('/:id/comments', (req, res) => {
 
     if (notifyUserId) {
       db.prepare(`INSERT INTO notifications (user_id, ticket_id, message) VALUES (?, ?, ?)`).run(notifyUserId, ticket.id, message);
+      sendToUser(notifyUserId, {
+        type: 'new_notification',
+        message,
+        ticket_id: ticket.id,
+      });
     }
   }
 
@@ -411,7 +426,7 @@ router.post('/:id/comments', (req, res) => {
 });
 
 // POST /api/tickets/:id/attachments  — dosya yükle (çoklu destek)
-router.post('/:id/attachments', upload.array('files', 5), (req, res) => {
+router.post('/:id/attachments', upload.array('files', 5), validateUploadedFiles, (req, res) => {
   if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'Dosya bulunamadı' });
 
   const db = getDb();
