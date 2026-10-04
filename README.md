@@ -1,3 +1,312 @@
+# 🎫 IT Help Desk System
+
+A full-stack web-based IT support and ticket management system developed during my Information Technology internship.
+
+The application was designed around an internal corporate IT support use case, allowing employees to submit technical support requests while enabling IT staff and administrators to manage the entire support process through a centralized platform.
+
+---
+
+## 📌 Project Overview
+
+IT Help Desk provides a structured environment for managing internal technical support requests.
+
+Instead of handling support requests through scattered communication channels, the system centralizes ticket creation, assignment, prioritization, communication, resolution, and reporting.
+
+The project was developed during my IT internship and prepared for real-world internal use.
+
+The application supports different user roles and provides dedicated capabilities for employees, IT staff, and administrators.
+
+---
+
+## ✨ Key Features
+
+- 🎫 Create and manage IT support tickets
+- 👥 Role-based access control
+- 🔐 JWT-based authentication
+- 🔒 Password hashing with bcrypt
+- 🔎 Search, filter, sort, and prioritize tickets
+- 👨‍💻 Assign tickets to IT staff
+- 💬 Ticket comments
+- 📝 Internal IT staff notes
+- 📎 File attachments
+- 🔔 In-app notifications
+- 🔀 Merge related tickets
+- ⭐ Customer Satisfaction (CSAT) ratings
+- ⏱️ SLA performance tracking
+- 📊 IT staff workload reporting
+- 📈 Resolution-time statistics
+- 📝 Ticket and system activity logs
+- 💾 Automatic SQLite database backups
+- 📱 Responsive web interface
+
+---
+
+## 👥 User Roles
+
+### 👤 User
+
+Employees can:
+
+- Create new support requests
+- View their own tickets
+- Track ticket status
+- Add comments
+- Upload attachments
+- Follow the resolution process
+- Rate resolved tickets
+
+### 🧑‍💻 IT Staff
+
+IT personnel can:
+
+- View support requests
+- Work with assigned tickets
+- Update ticket status
+- Change priority
+- Add comments
+- Add internal notes
+- Manage the ticket resolution process
+- Review operational information
+
+### 🛡️ Administrator
+
+Administrators have access to additional management capabilities such as:
+
+- User management
+- Ticket assignment
+- Ticket merging
+- SLA monitoring
+- CSAT reporting
+- IT staff workload analysis
+- Resolution-time reports
+- System logs
+- Operational reporting
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- React
+- Vite
+- React Router
+- Axios
+- Lucide React
+
+### Backend
+
+- Node.js
+- Express.js
+- REST API
+- JWT
+- bcrypt
+
+### Database
+
+- SQLite
+- better-sqlite3
+
+### Other Tools & Technologies
+
+- Multer
+- PM2
+- Git
+- GitHub
+
+---
+
+## 🏗️ Architecture
+
+The application follows a client-server architecture.
+
+```text
+┌─────────────────────┐
+│   React Frontend    │
+│       (Vite)        │
+└──────────┬──────────┘
+           │
+           │ REST API
+           ▼
+┌─────────────────────┐
+│ Node.js / Express   │
+│      Backend        │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│       SQLite        │
+│      Database       │
+└─────────────────────┘
+
+The React frontend communicates with the Node.js / Express backend through REST API endpoints.
+Authentication is handled using JWT, while passwords are protected using hashing.
+🔄 Ticket Workflow
+A typical support request follows this process:
+Employee
+   │
+   ▼
+Creates Ticket
+   │
+   ▼
+Ticket Submitted
+   │
+   ▼
+IT Staff / Admin
+   │
+   ▼
+Assignment & Prioritization
+   │
+   ▼
+Investigation
+   │
+   ▼
+Comments / Internal Notes
+   │
+   ▼
+Resolution
+   │
+   ▼
+Ticket Closed
+   │
+   ▼
+CSAT Feedback
+
+This structure allows support requests to be tracked throughout their lifecycle.
+📊 Reporting & Monitoring
+The system includes reporting and monitoring functionality for internal IT operations.
+Examples include:
+- SLA performance
+- Ticket resolution times
+- IT staff workload
+- User satisfaction (CSAT)
+- Ticket activity
+- System activity logs
+These features help provide visibility into the support process instead of using the application only as a basic ticket list.
+🔐 Authentication & Authorization
+Authentication is implemented using JWT.
+Passwords are protected using bcrypt hashing.
+The application uses role-based authorization to separate functionality between:
+User
+IT Staff
+Admin
+
+This prevents users from accessing functionality outside their assigned role.
+📎 File Attachments
+Users can attach files to support requests when additional information is required.
+File upload handling is implemented using Multer on the backend.
+This can be used for content such as:
+- Screenshots
+- Error messages
+- Supporting documents
+- Other ticket-related files
+🔔 Notifications
+The application includes an in-app notification system.
+Notifications help users and IT staff follow relevant changes in the ticket management process.
+⭐ CSAT — Customer Satisfaction
+After the support process is completed, users can provide satisfaction feedback.
+CSAT data can then be used as part of the reporting process to evaluate support quality.
+⏱️ SLA Tracking
+The system includes SLA-related monitoring functionality.
+This provides additional visibility into support performance and ticket resolution processes.
+💾 Database Backup
+The application includes automatic backup functionality for the SQLite database.
+This was included to provide additional protection for application data during internal use.
+📂 Project Structure
+it-helpdesk/
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+├── backend/
+│   ├── src/
+│   ├── data/
+│   └── package.json
+│
+├── .gitignore
+└── README.md
+
+The project separates frontend and backend responsibilities to keep the application structure maintainable.
+🚀 Running the Project
+1. Clone the repository
+git clone https://github.com/eren123H/it-helpdesk.git
+cd it-helpdesk
+
+2. Install Backend Dependencies
+cd backend
+npm install
+
+3. Install Frontend Dependencies
+Open another terminal:
+cd frontend
+npm install
+
+4. Start the Backend
+From the backend directory:
+npm start
+
+5. Start the Frontend
+From the frontend directory:
+npm run dev
+
+Depending on the deployment environment, additional configuration may be required.
+
+📸 Screenshots
+Application screenshots will be added to this section.
+Planned screenshots:
+- Login Page
+- User Dashboard
+- Ticket Creation
+- Ticket Detail
+- IT Staff Dashboard
+- Admin Panel
+- Reports
+💡 What I Learned
+Developing this project gave me practical experience in several areas of software development and IT operations:
+- Full-stack web application development
+- React frontend development
+- Node.js and Express backend development
+- REST API design
+- Authentication and authorization
+- Role-based access control
+- Relational database operations
+- Ticket workflow design
+- File upload handling
+- Reporting and operational dashboards
+- Application logging
+- Database backup processes
+- Git and version control
+- Working on a software solution based on a real internal IT support use case
+🎯 Project Background
+This project was developed during my Information Technology internship.
+The main objective was to create a centralized web-based system for managing internal IT support requests and provide different capabilities for employees, IT personnel, and administrators.
+Working on the project allowed me to combine software development with the IT support processes I encountered during my internship.
+🔮 Future Improvements
+Possible future improvements include:
+- Email notifications
+- Advanced analytics dashboards
+- Additional reporting capabilities
+- Improved automated testing
+- Docker-based deployment
+- Additional security improvements
+
+
+👨‍💻 Developer
+Eren Uçar
+Management Information Systems Graduate
+Focus Areas: IT • Software Development • Data Analytics
+- GitHub: github.com/eren123H
+- Portfolio: eren123h.github.io/portfolio
+
+
+
+
+
+
+
+
 # IT HelpDesk — Sirket Ici Destek Talep Yonetim Sistemi
 
 Node.js + SQLite tabanli, kurulum gerektirmeyen hafif bir IT destek talep yonetim sistemi.
