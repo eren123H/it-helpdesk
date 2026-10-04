@@ -138,11 +138,15 @@ The application follows a client-server architecture.
 │       SQLite        │
 │      Database       │
 └─────────────────────┘
+```
 
 The React frontend communicates with the Node.js / Express backend through REST API endpoints.
 Authentication is handled using JWT, while passwords are protected using hashing.
-🔄 Ticket Workflow
+
+## 🔄 Ticket Workflow
+
 A typical support request follows this process:
+```text
 Employee
    │
    ▼
@@ -171,9 +175,12 @@ Ticket Closed
    │
    ▼
 CSAT Feedback
+```
 
 This structure allows support requests to be tracked throughout their lifecycle.
-📊 Reporting & Monitoring
+
+## 📊 Reporting & Monitoring
+
 The system includes reporting and monitoring functionality for internal IT operations.
 Examples include:
 - SLA performance
@@ -183,7 +190,9 @@ Examples include:
 - Ticket activity
 - System activity logs
 These features help provide visibility into the support process instead of using the application only as a basic ticket list.
-🔐 Authentication & Authorization
+
+## 🔐 Authentication & Authorization
+
 Authentication is implemented using JWT.
 Passwords are protected using bcrypt hashing.
 The application uses role-based authorization to separate functionality between:
@@ -192,7 +201,9 @@ IT Staff
 Admin
 
 This prevents users from accessing functionality outside their assigned role.
-📎 File Attachments
+
+## 📎 File Attachments
+
 Users can attach files to support requests when additional information is required.
 File upload handling is implemented using Multer on the backend.
 This can be used for content such as:
@@ -200,19 +211,30 @@ This can be used for content such as:
 - Error messages
 - Supporting documents
 - Other ticket-related files
-🔔 Notifications
+
+## 🔔 Notifications
+
 The application includes an in-app notification system.
 Notifications help users and IT staff follow relevant changes in the ticket management process.
-⭐ CSAT — Customer Satisfaction
+
+## ⭐ CSAT — Customer Satisfaction
+
 After the support process is completed, users can provide satisfaction feedback.
 CSAT data can then be used as part of the reporting process to evaluate support quality.
-⏱️ SLA Tracking
+
+## ⏱️ SLA Tracking
+
 The system includes SLA-related monitoring functionality.
 This provides additional visibility into support performance and ticket resolution processes.
-💾 Database Backup
+
+## 💾 Database Backup
+
 The application includes automatic backup functionality for the SQLite database.
 This was included to provide additional protection for application data during internal use.
-📂 Project Structure
+
+## 📂 Project Structure
+
+```text
 it-helpdesk/
 │
 ├── frontend/
@@ -227,43 +249,69 @@ it-helpdesk/
 │
 ├── .gitignore
 └── README.md
+```
 
 The project separates frontend and backend responsibilities to keep the application structure maintainable.
-🚀 Running the Project
+
+## 🚀 Running the Project
+
 1. Clone the repository
+
+```bash
 git clone https://github.com/eren123H/it-helpdesk.git
 cd it-helpdesk
+```
 
 2. Install Backend Dependencies
+
+```bash
 cd backend
 npm install
+```
 
 3. Install Frontend Dependencies
 Open another terminal:
+
+```bash
 cd frontend
 npm install
+```
 
 4. Start the Backend
 From the backend directory:
+
+```bash
 npm start
+```
 
 5. Start the Frontend
 From the frontend directory:
+
+```bash
 npm run dev
+```
 
 Depending on the deployment environment, additional configuration may be required.
 
-📸 Screenshots
-Application screenshots will be added to this section.
-Planned screenshots:
-- Login Page
-- User Dashboard
-- Ticket Creation
-- Ticket Detail
-- IT Staff Dashboard
-- Admin Panel
-- Reports
-💡 What I Learned
+
+## 📸 Screenshots
+
+Real application screenshots are not yet included in this repository.
+
+The [screenshot guide](docs/screenshots/README.md) lists the planned captures, file names, and review steps. Images will be displayed here after real captures have been reviewed and added.
+
+| Screen | Planned file |
+|--------|--------------|
+| Login Page | `docs/screenshots/login.png` |
+| User Dashboard | `docs/screenshots/user-dashboard.png` |
+| Ticket Creation | `docs/screenshots/create-ticket.png` |
+| Ticket Detail | `docs/screenshots/ticket-detail.png` |
+| IT Staff Dashboard | `docs/screenshots/it-staff-dashboard.png` |
+| Admin Panel | `docs/screenshots/admin-panel.png` |
+| Reports (SLA / CSAT / workload) | `docs/screenshots/reports.png` |
+
+## 💡 What I Learned
+
 Developing this project gave me practical experience in several areas of software development and IT operations:
 - Full-stack web application development
 - React frontend development
@@ -279,11 +327,15 @@ Developing this project gave me practical experience in several areas of softwar
 - Database backup processes
 - Git and version control
 - Working on a software solution based on a real internal IT support use case
-🎯 Project Background
+
+## 🎯 Project Background
+
 This project was developed during my Information Technology internship.
 The main objective was to create a centralized web-based system for managing internal IT support requests and provide different capabilities for employees, IT personnel, and administrators.
 Working on the project allowed me to combine software development with the IT support processes I encountered during my internship.
-🔮 Future Improvements
+
+## 🔮 Future Improvements
+
 Possible future improvements include:
 - Email notifications
 - Advanced analytics dashboards
@@ -293,7 +345,9 @@ Possible future improvements include:
 - Additional security improvements
 
 
-👨‍💻 Developer
+
+## 👨‍💻 Developer
+
 Eren Uçar
 Management Information Systems Graduate
 Focus Areas: IT • Software Development • Data Analytics
