@@ -1,6 +1,8 @@
 # Application screenshots
 
-This folder is reserved for real captures of the running IT Help Desk application. No screenshots are currently available in the repository. Do not use generated mockups or placeholder images as evidence of the application.
+This folder contains real captures supplied by the developer: `login.png`, `create-ticket.png`, and `admin-panel.jpg`. Personal user records in the administration capture were redacted in the supplied image. Personal metadata was removed from the committed copies. The login and creation captures were converted from TIFF to PNG for browser compatibility.
+
+The captures come from the developer's running instance and may show features or styling that differ between repository branches. Ticket list and detail captures containing personal or internal information were excluded. Do not use generated mockups or placeholder images as evidence of the application.
 
 ## Capture plan
 
@@ -11,7 +13,7 @@ This folder is reserved for real captures of the running IT Help Desk applicatio
 | `create-ticket.png` | Support request form |
 | `ticket-detail.png` | Status, priority, assignment and comments |
 | `it-staff-dashboard.png` | Staff statistics and ticket management |
-| `admin-panel.png` | Administration view |
+| `admin-panel.jpg` | Administration view |
 | `reports.png` | SLA, CSAT and workload reports |
 
 Use an isolated local instance with fictional sample records. Capture only screens that exist in the application; omit unavailable views. Keep the interface readable and use consistent window sizes where possible.

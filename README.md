@@ -296,19 +296,21 @@ Depending on the deployment environment, additional configuration may be require
 
 ## 📸 Screenshots
 
-Real application screenshots are not yet included in this repository.
+Real application captures supplied by the developer. Personal user records in the administration view have been redacted. These captures show the interface from the developer's running instance; features and styling may differ between branches.
 
-The [screenshot guide](docs/screenshots/README.md) lists the planned captures, file names, and review steps. Images will be displayed here after real captures have been reviewed and added.
+### Login
 
-| Screen | Planned file |
-|--------|--------------|
-| Login Page | `docs/screenshots/login.png` |
-| User Dashboard | `docs/screenshots/user-dashboard.png` |
-| Ticket Creation | `docs/screenshots/create-ticket.png` |
-| Ticket Detail | `docs/screenshots/ticket-detail.png` |
-| IT Staff Dashboard | `docs/screenshots/it-staff-dashboard.png` |
-| Admin Panel | `docs/screenshots/admin-panel.png` |
-| Reports (SLA / CSAT / workload) | `docs/screenshots/reports.png` |
+![IT Help Desk login page](docs/screenshots/login.png)
+
+### Create Support Ticket
+
+![Support request form with category and impact selection](docs/screenshots/create-ticket.png)
+
+### Administration
+
+![User administration panel with personal records redacted](docs/screenshots/admin-panel.jpg)
+
+Dashboard, ticket detail, and reporting captures can be added after sensitive information has been removed. See the [screenshot guide](docs/screenshots/README.md).
 
 ## 💡 What I Learned
 
